@@ -71,9 +71,6 @@ bool VideoPlayer::isPlaying(){
 }
 //转成C语言字符串防止出现乱码666-> 666\0 后面要加1,写引用防止拷贝构造函数
 void VideoPlayer::setFilename(const char *filename){
-//    const char *file = filename.toUtf8().data();
-    //C++字符串转C语言字符串，防止路径名出错
-//    const char *file = filename.toStdString().c_str();
     printf("%s\n",filename);
     memcpy(_filename,filename,strlen(filename) + 1);
     cout << _filename << endl;
@@ -118,9 +115,9 @@ void VideoPlayer::readFile(){
         av_dump_format(_fmtCtx,0,_filename,0);
         fflush(stderr);
         //初始化音频信息
-        _hasAudio = initAudioInfo() >= 0;
+        _hasAudio = initAudioInfo() >= 0; // 耗时
         //初始化视频信息
-        _hasVideo = initVideoInfo() >= 0;
+        _hasVideo = initVideoInfo() >= 0; // 耗时
         if(!_hasAudio && !_hasVideo)
         {
             fataError();

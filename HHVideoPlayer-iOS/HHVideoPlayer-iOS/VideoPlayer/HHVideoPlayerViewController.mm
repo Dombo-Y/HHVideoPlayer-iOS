@@ -8,8 +8,23 @@
 #import "HHVideoPlayerViewController.h"
 #import "Masonry.h"
 
-@interface HHVideoPlayerViewController ()
+extern "C" {
+#include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
+#include "SDL_main.h"
+}
+#include "Videoplayer.h"
+#import "OpenGLView20.h"
+ 
 
+@interface HHVideoPlayerViewController (){
+//    OpenGLView20 *_myview;
+    VideoPlayer *_player;
+}
+
+@property (nonatomic,copy)NSString * path;
+
+@property (nonatomic, copy)OpenGLView20 *renderView;
 
 @property (nonatomic, strong)UIView *contentView;
 @property (nonatomic, strong)UIView *topView;
@@ -32,8 +47,16 @@
     [self.topView addSubview:self.playBtn];
     [self.topView addSubview:self.pauseBtn];
     [self.contentView addSubview:self.videoView];
+    [self.videoView addSubview:self.renderView];
     [self setupSubViewLayout];
+     
+    const char *s = av_version_info();
+    printf("ffmpeg版本:%s\n",s);
     
+    //初始化播放器
+    _player = new VideoPlayer();
+    //大文件
+    _path = [[NSBundle mainBundle] pathForResource:@"output" ofType:@"mp4"];
 }
 
 - (UIView *)contentView {
@@ -91,6 +114,15 @@
     return _videoView;
 }
 
+- (OpenGLView20 *)renderView {
+    if (!_renderView) {
+        _renderView = [[OpenGLView20 alloc] initWithFrame:CGRectZero];
+        _renderView.layer.borderWidth = 1;
+        _renderView.layer.borderColor = [UIColor greenColor].CGColor;
+    }
+    return _renderView;
+}
+
 - (void)setupSubViewLayout {
     [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.left.right.bottom.equalTo(self.view);
@@ -125,13 +157,19 @@
         make.width.equalTo(self.view);
         make.height.mas_equalTo(@(self.view.frame.size.width * 0.75));
     }];
+    [self.renderView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.top.equalTo(self.videoView).mas_offset(@5);
+        make.right.bottom.equalTo(self.videoView).mas_offset(@-5);
+    }];
 }
 
 
 - (void)playMethod:(UIButton *) btn {
+    
+    [self playerAudio];
 //    [[HHVideoPlayer sharedInstance] play];
 //    [HHVideoPlayer sharedInstance].delegate = self;
-
+    
 //    NSString *filePath = [[NSBundle mainBundle] pathForResource:@"video" ofType:@"mp4"];
 //    HHAVParseHandler *parseHandle = [[HHAVParseHandler alloc] initWithPath:filePath];
 ////    HHVideoDecoder *videoDecoder = [[HHVideoDecoder alloc] initWithFormatContext:[parseHandle getFormatContext] videoStreamIndex:[parseHandle getVideoStreamIndex]];
@@ -165,7 +203,16 @@
 }
 
 - (void)playerAudio {
-
+    const char *filename = [_path cStringUsingEncoding:NSUTF8StringEncoding];
+    __weak typeof(self) weakSelf = self;
+    //传入文件路径
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        //传入OC对象到C++保存，后续渲染
+        self->_player->setSelf((__bridge void *)strongSelf);
+        self->_player->setFilename(filename);
+        self->_player->readFile();
+    });
 }
 
 
@@ -228,7 +275,7 @@ void stateChanged(void *hhObjectInstance) {
     
 }
 #pragma mark 音视频解码器初始化完毕
--(void)initFinished{
+-(void)initFinished {
     
 }
 void initFinished(void *hhObjectInstance) { 

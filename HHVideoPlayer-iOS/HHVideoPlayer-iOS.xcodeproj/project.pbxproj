@@ -15,7 +15,7 @@
 		D176310129DDAE0E00D25BA7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D17630FF29DDAE0E00D25BA7 /* LaunchScreen.storyboard */; };
 		D176310429DDAE0E00D25BA7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D176310329DDAE0E00D25BA7 /* main.m */; };
 		D176310C29DDAF6D00D25BA7 /* HHBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D176310B29DDAF6D00D25BA7 /* HHBaseViewController.m */; };
-		D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.m */; };
+		D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm */; };
 		D176311229DDB00800D25BA7 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D176311129DDB00800D25BA7 /* AVFoundation.framework */; };
 		D176311429DDB00F00D25BA7 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D176311329DDB00F00D25BA7 /* GameController.framework */; };
 		D176311629DDB01500D25BA7 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D176311529DDB01500D25BA7 /* UIKit.framework */; };
@@ -71,7 +71,7 @@
 		D176310A29DDAF6D00D25BA7 /* HHBaseViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHBaseViewController.h; sourceTree = "<group>"; };
 		D176310B29DDAF6D00D25BA7 /* HHBaseViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HHBaseViewController.m; sourceTree = "<group>"; };
 		D176310E29DDAFCA00D25BA7 /* HHVideoPlayerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayerViewController.h; sourceTree = "<group>"; };
-		D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HHVideoPlayerViewController.m; sourceTree = "<group>"; };
+		D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = HHVideoPlayerViewController.mm; sourceTree = "<group>"; };
 		D176311129DDB00800D25BA7 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		D176311329DDB00F00D25BA7 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		D176311529DDB01500D25BA7 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -425,7 +425,7 @@
 			children = (
 				D176324029DDB3BE00D25BA7 /* CPP */,
 				D176310E29DDAFCA00D25BA7 /* HHVideoPlayerViewController.h */,
-				D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.m */,
+				D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm */,
 			);
 			path = VideoPlayer;
 			sourceTree = "<group>";
@@ -1009,7 +1009,7 @@
 				D17630F629DDAE0B00D25BA7 /* SceneDelegate.m in Sources */,
 				D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */,
 				D176324329DDB3D800D25BA7 /* condmutex.cpp in Sources */,
-				D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.m in Sources */,
+				D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm in Sources */,
 				D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */,
 				D176323A29DDB0D400D25BA7 /* OpenGLView20.m in Sources */,
 			);
