@@ -11,42 +11,43 @@
 extern "C" {
  #include <libavutil/imgutils.h>
 }
-//初始化视频信息
-int VideoPlayer::initVideoInfo(){
+
+
+int VideoPlayer::initVideoInfo(){ //初始化视频信息
     int ret = initDecoder(&_vDecodeCtx,&_vStream,AVMEDIA_TYPE_VIDEO);
     RET(initDecoder);
 
-    //初始化视频像素格式转换
-    ret = initSws();
+    ret = initSws();  //初始化视频像素格式转换
     RET(initSws);
 
     return 0;
 }
-//初始化视频像素格式转换
-int VideoPlayer::initSws(){
-    //初始化输入Frame
-    _vSwsInFrame = av_frame_alloc();
+
+int VideoPlayer::initSws(){ //初始化视频像素格式转换
+    _vSwsInFrame = av_frame_alloc();   //初始化输入Frame
     if(!_vSwsInFrame){
         cout << "av_frame_alloc error" << endl;
         return -1;
     }
     return 0;
 }
+
 void VideoPlayer::addVideoPkt(AVPacket &pkt){
     _vMutex.lock();
     _vPktList.push_back(pkt);
     _vMutex.signal();
     _vMutex.unlock();
 }
+
 void VideoPlayer::clearVideoPktList(){
     _vMutex.lock();
-    //取出list，前面加*
-    for(AVPacket &pkt:_vPktList){
+    for(AVPacket &pkt:_vPktList){    //取出list，前面加*
         av_packet_unref(&pkt);
     }
     _vPktList.clear();
     _vMutex.unlock();
 }
+
 void VideoPlayer::freeVideo(){
     _vTime = 0;
     _vCanFree = false;
@@ -62,10 +63,10 @@ void VideoPlayer::freeVideo(){
     _vStream = nullptr;
     _vSeekTime = -1;
 }
+
 void VideoPlayer::decodeVideo(){
     while (true) {
-        //如果是暂停状态,并且没有seek操作，暂停状态也能seek
-        if(_state == Paused && _vSeekTime == -1) continue;
+        if(_state == Paused && _vSeekTime == -1) continue;  //如果是暂停状态,并且没有seek操作，暂停状态也能seek
         //如果是停止状态，会调用free，就不用再去解码，重采样，渲染，导致访问释放了的内存空间，会闪退
         if(_state == Stopped){
             _vCanFree = true;
@@ -76,26 +77,23 @@ void VideoPlayer::decodeVideo(){
             _vMutex.unlock();
             continue;
         }
-        //取出头部的视频包
-        AVPacket pkt = _vPktList.front();
+        
+        AVPacket pkt = _vPktList.front();//取出头部的视频包
         _vPktList.pop_front();
         _vMutex.unlock();
+ 
+        int ret = avcodec_send_packet(_vDecodeCtx,&pkt);  //发送数据到解码器
 
-        //发送数据到解码器
-        int ret = avcodec_send_packet(_vDecodeCtx,&pkt);
-
-        //视频时钟 视频用dts，音频用pts
-        if(pkt.dts != AV_NOPTS_VALUE){
+       
+        if(pkt.dts != AV_NOPTS_VALUE){  //视频时钟 视频用dts，音频用pts
 //            cout << "视频时间基分子:" << _vStream->time_base.num << "---视频时间基分母:" << _vStream->time_base.den << endl;
             _vTime = av_q2d(_vStream->time_base) * pkt.pts;
 //            cout << "当前视频时间"<< _vTime << "seek时间" << _vSeekTime << endl;
         }
-
-        //释放pkt
-        av_packet_unref(&pkt);
+ 
+        av_packet_unref(&pkt); //释放pkt 
         CONTINUE(avcodec_send_packet);
-        while (true) {
-            //获取解码后的数据
+        while (true) {  //获取解码后的数据
             ret = avcodec_receive_frame(_vDecodeCtx,_vSwsInFrame);
             if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
                 break;//结束本次循环，重新从_vPktList取出包进行解码
@@ -137,7 +135,7 @@ void VideoPlayer::decodeVideo(){
             }else{
                 //TODO 没有音频的情况
             }
-//            playerDoDraw(self,buf,_vSwsInFrame->width,_vSwsInFrame->height);
+            playerDoDraw(self,buf,_vSwsInFrame->width,_vSwsInFrame->height);
             
             //TODO ---- 啥时候释放 若立即释放 会崩溃 原因是渲染并没有那么快，OPENGL还没有渲染完毕，但是这块内存已经被free掉了
             //放到OPGLES glview中等待一帧渲染完毕后，再释放，此处不能释放

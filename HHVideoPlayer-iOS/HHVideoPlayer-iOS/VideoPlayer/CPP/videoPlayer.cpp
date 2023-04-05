@@ -185,13 +185,11 @@ void VideoPlayer::readFile(){
             ret = av_read_frame(_fmtCtx,&pkt);
             if(ret == 0){
                 if(pkt.stream_index == _aStream->index){//读取到的是音频数据
-//                    cout << "--------读取音频-------" << endl;
-                    addAudioPkt(pkt);
+                    addAudioPkt(pkt); // 读取音频
                 }else if(pkt.stream_index == _vStream->index){//读取到的是视频数据
-//                    cout << "--------读取视频-------" << endl;
-                    addVideoPkt(pkt);
-                }else{//如果不是音频、视频流，直接释放，防止内存泄露
-                    av_packet_unref(&pkt);
+                    addVideoPkt(pkt); // 读取视频
+                }else{
+                    av_packet_unref(&pkt); //如果不是音频、视频流，直接释放，防止内存泄露
                 }
             }else if(ret == AVERROR_EOF){//读到了文件尾部
                 if(vSize == 0 && aSize == 0){
@@ -219,19 +217,19 @@ void VideoPlayer::readFile(){
 //外部能获取到，C语言中的指针改变传入的地址中的值
 int VideoPlayer::initDecoder(AVCodecContext **decodeCtx,AVStream **stream,AVMediaType type){
     //根据TYPE寻找最合适的流信息
-    //返回值是流索引
-    int ret = av_find_best_stream(_fmtCtx,type,-1,-1,nullptr,0);
+   
+    int ret = av_find_best_stream(_fmtCtx,type,-1,-1,nullptr,0);  //返回值是流索引
     RET(av_find_best_stream);
-    //检验流
-    int streamIdx = ret;
+   
+    int streamIdx = ret; //检验流
     //cout  << "文件的流的数量" << _fmtCtx->nb_streams << endl;
     *stream = _fmtCtx->streams[streamIdx];
     if(!*stream){
         cout << "stream is empty" << endl;
         return -1;
     }
-    //为当前流找到合适的解码器
-    AVCodec *decoder = nullptr;
+   
+    AVCodec *decoder = nullptr;  //为当前流找到合适的解码器
     //音频解码器用libfdk_aac，不用ffmpeg默认自带的aac，默认自带的aac会解码成fltp格式的pcm，libfdk_aac会解码成sl6le的pcm
     if((*stream)->codecpar->codec_id == AV_CODEC_ID_AAC){
         decoder = avcodec_find_decoder_by_name("libfdk_aac");
