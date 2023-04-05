@@ -318,6 +318,7 @@
 		D176322B29DDB0D200D25BA7 /* SDL_opengles2_gl2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SDL_opengles2_gl2.h; sourceTree = "<group>"; };
 		D176322D29DDB0D200D25BA7 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libSDL2.a; sourceTree = "<group>"; };
 		D176322F29DDB0D200D25BA7 /* output.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = output.mp4; sourceTree = "<group>"; };
+		D176323F29DDB25A00D25BA7 /* HHPrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHPrefixHeader.pch; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -397,6 +398,7 @@
 				D17630F729DDAE0B00D25BA7 /* ViewController.h */,
 				D17630F829DDAE0B00D25BA7 /* ViewController.m */,
 				D176310A29DDAF6D00D25BA7 /* HHBaseViewController.h */,
+				D176323F29DDB25A00D25BA7 /* HHPrefixHeader.pch */,
 				D176310B29DDAF6D00D25BA7 /* HHBaseViewController.m */,
 				D17630FA29DDAE0B00D25BA7 /* Main.storyboard */,
 				D17630FD29DDAE0E00D25BA7 /* Assets.xcassets */,
