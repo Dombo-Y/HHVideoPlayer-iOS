@@ -206,4 +206,57 @@
     }
 }
 
+
+#pragma mark - C 语言函数
+int playerDoSomethingWith (void *hhObjectInstance, void *parameter) {
+    
+    return  1;
+}
+#pragma mark 解码完成绘制视频帧
+void playerDoDraw(void *hhObjectInstance,void *data, uint32_t w, uint32_t h) {
+    
+}
+
+#pragma mark 播放器状态改变
+void stateChanged(void *hhObjectInstance) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [(__bridge id)hhObjectInstance stateChanged];
+    });
+}
+
+-(void)stateChanged{
+    
+}
+#pragma mark 音视频解码器初始化完毕
+-(void)initFinished{
+    
+}
+void initFinished(void *hhObjectInstance) { 
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [(__bridge id)hhObjectInstance initFinished];
+    });
+}
+
+
+#pragma mark 音视频播放音频时间变化 时间Label和进度条变化
+-(void)timeChanged{
+    //音频播放时间设置滚动条和label
+//    self.timeSlider.value = _player->getTime();
+//    self.timeLabel.text = [self getTimeText:_player->getTime()];
+}
+
+#pragma mark 音视频播放音频时间变化
+void timeChanged(void *hhObjectInstance) {
+    
+} 
+
+#pragma mark 音视频播放失败
+void playFailed(void *hhObjectInstance) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [(__bridge id)hhObjectInstance playFailed];
+    });
+}
+-(void)playFailed{
+    
+}
 @end

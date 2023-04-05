@@ -45,6 +45,10 @@
 		D176323C29DDB0D400D25BA7 /* SDL_config.h.in in Resources */ = {isa = PBXBuildFile; fileRef = D176321E29DDB0D200D25BA7 /* SDL_config.h.in */; };
 		D176323D29DDB0D400D25BA7 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D176322D29DDB0D200D25BA7 /* libSDL2.a */; };
 		D176323E29DDB0D400D25BA7 /* output.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = D176322F29DDB0D200D25BA7 /* output.mp4 */; };
+		D176324329DDB3D800D25BA7 /* condmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324129DDB3D800D25BA7 /* condmutex.cpp */; };
+		D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324529DDB44700D25BA7 /* videoPlayer.cpp */; };
+		D176324B29DDB62800D25BA7 /* videoPlayer_video.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */; };
+		D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */; };
 		FC7007B0B55CDA711D7DB8D2 /* Pods_HHVideoPlayer_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C355B2828AD2B34D5202093 /* Pods_HHVideoPlayer_iOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -319,6 +323,13 @@
 		D176322D29DDB0D200D25BA7 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libSDL2.a; sourceTree = "<group>"; };
 		D176322F29DDB0D200D25BA7 /* output.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = output.mp4; sourceTree = "<group>"; };
 		D176323F29DDB25A00D25BA7 /* HHPrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHPrefixHeader.pch; sourceTree = "<group>"; };
+		D176324129DDB3D800D25BA7 /* condmutex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = condmutex.cpp; sourceTree = "<group>"; };
+		D176324229DDB3D800D25BA7 /* condmutex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = condmutex.h; sourceTree = "<group>"; };
+		D176324529DDB44700D25BA7 /* videoPlayer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer.cpp; sourceTree = "<group>"; };
+		D176324629DDB44700D25BA7 /* videoPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = videoPlayer.h; sourceTree = "<group>"; };
+		D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_video.cpp; sourceTree = "<group>"; };
+		D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_audio.cpp; sourceTree = "<group>"; };
+		D176324F29DDB77200D25BA7 /* PlayerC_interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayerC_interface.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -412,6 +423,7 @@
 		D176310D29DDAF8800D25BA7 /* VideoPlayer */ = {
 			isa = PBXGroup;
 			children = (
+				D176324029DDB3BE00D25BA7 /* CPP */,
 				D176310E29DDAFCA00D25BA7 /* HHVideoPlayerViewController.h */,
 				D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.m */,
 			);
@@ -836,6 +848,20 @@
 			path = Resource;
 			sourceTree = "<group>";
 		};
+		D176324029DDB3BE00D25BA7 /* CPP */ = {
+			isa = PBXGroup;
+			children = (
+				D176324129DDB3D800D25BA7 /* condmutex.cpp */,
+				D176324229DDB3D800D25BA7 /* condmutex.h */,
+				D176324F29DDB77200D25BA7 /* PlayerC_interface.h */,
+				D176324629DDB44700D25BA7 /* videoPlayer.h */,
+				D176324529DDB44700D25BA7 /* videoPlayer.cpp */,
+				D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */,
+				D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */,
+			);
+			path = CPP;
+			sourceTree = "<group>";
+		};
 		FD5E2B5E19F0AF4844032CBA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -979,8 +1005,12 @@
 				D17630F929DDAE0B00D25BA7 /* ViewController.m in Sources */,
 				D17630F329DDAE0B00D25BA7 /* AppDelegate.m in Sources */,
 				D176310429DDAE0E00D25BA7 /* main.m in Sources */,
+				D176324B29DDB62800D25BA7 /* videoPlayer_video.cpp in Sources */,
 				D17630F629DDAE0B00D25BA7 /* SceneDelegate.m in Sources */,
+				D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */,
+				D176324329DDB3D800D25BA7 /* condmutex.cpp in Sources */,
 				D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.m in Sources */,
+				D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */,
 				D176323A29DDB0D400D25BA7 /* OpenGLView20.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
