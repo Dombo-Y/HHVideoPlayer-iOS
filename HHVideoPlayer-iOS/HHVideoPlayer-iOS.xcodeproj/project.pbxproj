@@ -329,7 +329,7 @@
 		D176324629DDB44700D25BA7 /* videoPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = videoPlayer.h; sourceTree = "<group>"; };
 		D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_video.cpp; sourceTree = "<group>"; };
 		D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_audio.cpp; sourceTree = "<group>"; };
-		D176324F29DDB77200D25BA7 /* PlayerC_interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayerC_interface.h; sourceTree = "<group>"; };
+		D176325229DDC22900D25BA7 /* PlayerCInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlayerCInterface.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -853,7 +853,7 @@
 			children = (
 				D176324129DDB3D800D25BA7 /* condmutex.cpp */,
 				D176324229DDB3D800D25BA7 /* condmutex.h */,
-				D176324F29DDB77200D25BA7 /* PlayerC_interface.h */,
+				D176325229DDC22900D25BA7 /* PlayerCInterface.h */,
 				D176324629DDB44700D25BA7 /* videoPlayer.h */,
 				D176324529DDB44700D25BA7 /* videoPlayer.cpp */,
 				D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */,

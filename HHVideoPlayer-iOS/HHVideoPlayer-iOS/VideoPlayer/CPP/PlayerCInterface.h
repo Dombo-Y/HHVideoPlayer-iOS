@@ -1,6 +1,6 @@
 //
-//  PlayerC_interface.h
-//  HHVideoPlayer_FFmpeg
+//  PlayerCInterface.h
+//  HHVideoPlayer-iOS
 //
 //  Created by 尹东博 on 2023/4/5.
 //

@@ -64,7 +64,7 @@ void VideoPlayer::stop(){
     //释放资源
     playerfree();
     //通知外界
-//    stateChanged(self);
+    stateChanged(self);
 }
 bool VideoPlayer::isPlaying(){
     return _state == VideoPlayer::Playing;
@@ -125,7 +125,7 @@ void VideoPlayer::readFile(){
         }
 
         //初始化完毕，发送信号
-//        initFinished(self);
+        initFinished(self);
         //改变状态 要在读取线程的前面，否则导致解码循环提前退出，解码循环读取到时Stop状态直接break，再也不进入 无法解码 一直黑屏或没有声音，
         //也可能SDL音频子线程一开始在Stopped，就退出了
         setState(VideoPlayer::Playing);
@@ -262,7 +262,7 @@ void VideoPlayer::setState(State state){
     if(state == _state) return;
     _state = state;
     //通知播放器进行UI改变
-//    stateChanged(self);
+    stateChanged(self);
 }
 void VideoPlayer::playerfree(){
     while (_hasAudio && !_aCanFree);
@@ -280,7 +280,7 @@ void VideoPlayer::fataError(){
     _state = Playing;
     stop();
     setState(Stopped);
-//    playFailed(self);
+    playFailed(self);
     playerfree();
 }
 #pragma mark 调用C函数
@@ -288,8 +288,7 @@ int VideoPlayer::someMethod (void *objectiveCObject, void *aParameter)
 {
     // To invoke an Objective-C method from C++, use
     // the C trampoline function
-//    return playerDoSomethingWith(objectiveCObject, aParameter);
-    return  1;
+    return playerDoSomethingWith(objectiveCObject, aParameter); 
 }
 
 void VideoPlayer::setSelf(void *aSelf)

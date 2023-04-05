@@ -6,7 +6,7 @@
 //
 
 #include "videoPlayer.h"
-#include "PlayerC_interface.h"
+#include "PlayerCInterface.h"
 
 extern "C" {
  #include <libavutil/imgutils.h>

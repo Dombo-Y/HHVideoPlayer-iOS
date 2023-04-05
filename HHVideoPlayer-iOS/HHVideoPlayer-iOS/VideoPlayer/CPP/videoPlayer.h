@@ -13,7 +13,7 @@
 #include "condmutex.h"
 #include <iostream>
 using namespace std;
-#include "PlayerC_interface.h"
+#include "PlayerCInterface.h"
 
 extern "C" {
 //格式
