@@ -208,16 +208,20 @@ extern "C" {
     //传入文件路径
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         __strong typeof(weakSelf) strongSelf = weakSelf;
-        //传入OC对象到C++保存，后续渲染
         self->_player->setSelf((__bridge void *)strongSelf);
         self->_player->setFilename(filename);
-        self->_player->readFile();
+//        self->_player->readFile();
+        self->_player->play();
     });
 }
 
 
 - (void)pauseMethod:(UIButton *)btn {
-    
+    if (self->_player->isPlaying()) {
+        self->_player->pause();
+    }else {
+        self->_player->play();
+    }
 }
 
 - (void)backMethod:(UIButton *)btn {

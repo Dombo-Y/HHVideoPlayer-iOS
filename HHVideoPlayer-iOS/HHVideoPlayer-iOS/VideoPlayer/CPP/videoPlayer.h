@@ -12,6 +12,7 @@
 #include "list"
 #include "condmutex.h"
 #include <iostream>
+#include "videoState.hpp"
 using namespace std;
 #include "PlayerCInterface.h"
 
@@ -180,6 +181,8 @@ private:
     void freeAudio();
     void freeVideo();
     void fataError();
+    void initVideoState();
     
+    VideoState *is;// 用于存储音视频文件的信息状态用
 };
 #endif /* videoPlayer_hpp */

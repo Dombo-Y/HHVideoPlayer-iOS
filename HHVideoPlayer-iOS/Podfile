@@ -4,6 +4,6 @@ target 'HHVideoPlayer-iOS' do
  use_frameworks!
  
    pod 'WebRTC', '~> 63.11.20455'
-   pod 'Masonry', '~> 1.1.0'
+   pod 'Masonry', '~> 1.1.0' ,:inhibit_warnings => true
 
 end
