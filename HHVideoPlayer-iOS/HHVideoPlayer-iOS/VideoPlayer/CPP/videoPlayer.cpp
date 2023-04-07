@@ -7,7 +7,7 @@
 
 #include "videoPlayer.h"
 #include <thread>
-#include "cmdutils.h"
+#include "cmdutils.h" 
 
 #define AUDIO_MAX_PKT_SIZE 1000
 #define VIDEO_MAX_PKT_SIZE 500
@@ -21,8 +21,9 @@ static AVPacket flush_pkt;
 VideoPlayer::VideoPlayer()
 {
     // 初始化Audio子系统
-    if (SDL_Init(SDL_INIT_AUDIO)) { // 返回值不是0，就代表失败
-        cout << "SDL_Init Error" << SDL_GetError() << endl;
+    int flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+    if (SDL_Init(flags)) { // 返回值不是0，就代表失败
+        cout << "SDL_Init Error ～～" << SDL_GetError() << endl;
         return;
     }
 }
@@ -75,8 +76,7 @@ static Frame *frame_queue_peek_writable(FrameQueue *f)
 { // ，它会在帧队列中有空间可用之前一直等待，并阻塞当前线程，直到有新的帧可被写入队列
     /* wait until we have space to put a new frame */
     SDL_LockMutex(f->mutex);
-    while (f->size >= f->max_size &&
-           !f->pktq->abort_request) {
+    while (f->size >= f->max_size &&!f->pktq->abort_request) {
         SDL_CondWait(f->cond, f->mutex);
     }
     SDL_UnlockMutex(f->mutex);
@@ -137,76 +137,74 @@ static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
     for (;;) {
         AVPacket pkt;
-        if (d->queue->serial == d->pkt_serial) {
-            do {
-                if (d->queue->abort_request)
-                    return -1;
-                switch (d->avctx->codec_type) {
-                    case AVMEDIA_TYPE_UNKNOWN:
-                        break;
-                    case AVMEDIA_TYPE_VIDEO:
-                        ret = avcodec_receive_frame(d->avctx, frame);
-                        if (ret >= 0) {
-                            if (decoder_reorder_pts == -1) {
-                                frame->pts = frame->best_effort_timestamp;
-                            }else if (!decoder_reorder_pts) {
-                                frame->pts = frame->pkt_dts;
-                            }
-                        }
-                        break;
-                    case AVMEDIA_TYPE_AUDIO: {
-                        ret = avcodec_receive_frame(d->avctx, frame);
-                        if (ret >= 0) {
-                            AVRational tb = (AVRational){1, frame->sample_rate};
-                            if (frame->pts != AV_NOPTS_VALUE){
-                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
-                            }
-                            else if (d->next_pts != AV_NOPTS_VALUE){
-                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
-                            }
-                            if (frame->pts != AV_NOPTS_VALUE) {
-                                d->next_pts = frame->pts + frame->nb_samples;
-                                d->next_pts_tb = tb;
-                            }
-                        }
-                        break;
-                    }
-                    case AVMEDIA_TYPE_DATA:
-                        break;
-                    case AVMEDIA_TYPE_SUBTITLE:
-                        break;
-                    case AVMEDIA_TYPE_ATTACHMENT:
-                        break;
-                    case AVMEDIA_TYPE_NB:
-                        break;
-                }
-                if (ret == AVERROR_EOF) {
-                    d->finished = d->pkt_serial;
-                    avcodec_flush_buffers(d->avctx);
-                    return 0;
-                }
-                if (ret >= 0) {
-                    return 1;
-                }
-            } while (ret != AVERROR(EAGAIN));
-        }
-        do { // 首先，它会检查packet队列中是否有待解码的数据包，如果队列中没有待解码的数据包，则会通过SDL_CondSignal函数发出一个信号，等待队列中有新的数据包加入
-            if (d->queue->nb_packets == 0){
-                SDL_CondSignal(d->empty_queue_cond);
-            }
-            if (d->packet_pending) {
-                // 如果队列中有数据包，它会检查是否有未解码的packet数据包，如果有，则将其移动到pkt变量中，并将packet_pending标志位设置为0
-                av_packet_move_ref(&pkt, &d->pkt);
-                d->packet_pending = 0;
-            } else { // 如果队列中没有未解码的packet数据包，则使用packet_queue_get函数从队列中获取一个packet数据包
-                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0) {
-                    return -1;
-                }
-            }
-            if (d->queue->serial == d->pkt_serial)
-                break;
-            av_packet_unref(&pkt);
-        } while (1);
+//        if (d->queue->serial == d->pkt_serial) {
+//            do {
+//                if (d->queue->abort_request)
+//                    return -1;
+//                switch (d->avctx->codec_type) {
+//                    case AVMEDIA_TYPE_UNKNOWN:
+//                        break;
+//                    case AVMEDIA_TYPE_VIDEO:
+//                        ret = avcodec_receive_frame(d->avctx, frame);
+//                        if (ret >= 0) {
+//                            if (decoder_reorder_pts == -1) {
+//                                frame->pts = frame->best_effort_timestamp;
+//                            }else if (!decoder_reorder_pts) {
+//                                frame->pts = frame->pkt_dts;
+//                            }
+//                        }
+//                        break;
+//                    case AVMEDIA_TYPE_AUDIO: {
+//                        ret = avcodec_receive_frame(d->avctx, frame);
+//                        if (ret >= 0) {
+//                            AVRational tb = (AVRational){1, frame->sample_rate};
+//                            if (frame->pts != AV_NOPTS_VALUE){
+//                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
+//                            }
+//                            else if (d->next_pts != AV_NOPTS_VALUE){
+//                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
+//                            }
+//                            if (frame->pts != AV_NOPTS_VALUE) {
+//                                d->next_pts = frame->pts + frame->nb_samples;
+//                                d->next_pts_tb = tb;
+//                            }
+//                        }
+//                        break;
+//                    }
+//                    case AVMEDIA_TYPE_DATA:
+//                    case AVMEDIA_TYPE_SUBTITLE:
+//                    case AVMEDIA_TYPE_ATTACHMENT:
+//                    case AVMEDIA_TYPE_NB:
+//                        break;
+//                }
+//                if (ret == AVERROR_EOF) {
+//                    d->finished = d->pkt_serial;
+//                    avcodec_flush_buffers(d->avctx);
+//                    return 0;
+//                }
+//                if (ret >= 0) {
+//                    return 1;
+//                }
+//            } while (ret != AVERROR(EAGAIN));
+//        }
+        
+//        do { // 首先，它会检查packet队列中是否有待解码的数据包，如果队列中没有待解码的数据包，则会通过SDL_CondSignal函数发出一个信号，等待队列中有新的数据包加入
+//            if (d->queue->nb_packets == 0){
+//                SDL_CondSignal(d->empty_queue_cond);
+//            }
+//            if (d->packet_pending) {
+//                // 如果队列中有数据包，它会检查是否有未解码的packet数据包，如果有，则将其移动到pkt变量中，并将packet_pending标志位设置为0
+//                av_packet_move_ref(&pkt, &d->pkt);
+//                d->packet_pending = 0;
+//            } else { // 如果队列中没有未解码的packet数据包，则使用packet_queue_get函数从队列中获取一个packet数据包
+//                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0) {
+//                    return -1;
+//                }
+//            }
+//            if (d->queue->serial == d->pkt_serial)
+//                break;
+//            av_packet_unref(&pkt);
+//        } while (1);
         
         if (pkt.data == flush_pkt.data) {
             avcodec_flush_buffers(d->avctx);
@@ -268,7 +266,6 @@ int audio_thread(void *arg)
 
 #pragma mark - setFilename
 void VideoPlayer::setFilename(const char *filename){
-    printf("%s\n",filename);
     memcpy(_filename,filename,strlen(filename) + 1);
     cout << _filename << endl;
 }
@@ -671,10 +668,7 @@ static int read_thread(void *arg)
 void VideoPlayer::initVideoState() {
     VideoState *iv;
     iv = (VideoState *)av_malloc(sizeof(VideoState)); // 初始化 VideoState
-    if (!iv) {
-//        return NULL;
-    }
-    
+    int ret ;
     iv->last_video_stream = iv->video_stream = -1;// 初始化 视频 stream头尾标记
     iv->last_audio_stream = iv->audio_stream = -1;// 初始化 音频 stream头尾标记
     iv->filename = _filename;
@@ -686,10 +680,9 @@ void VideoPlayer::initVideoState() {
 //        return NULL;
     
 //    初始化解码前的帧队列
-    if (packet_queue_init(&iv->videoq) <0 ||
-        packet_queue_init(&iv->audioq) < 0) {
-//        return NULL;
-    }
+    ret = packet_queue_init(&iv->videoq);
+    ret = packet_queue_init(&iv->audioq);
+   
     if(!(iv->continue_read_thread = SDL_CreateCond())) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
 //        return NULL;
@@ -703,23 +696,18 @@ void VideoPlayer::initVideoState() {
     iv->av_sync_type = av_sync_type;// 音频时钟同步
     iv->read_tid = SDL_CreateThread(read_thread, "read_thread", iv);
    
-    if (iv->read_tid) {
+    if (!iv->read_tid) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateThread(): %s\n", SDL_GetError());
     }
     is = iv; 
 }
 
 void VideoPlayer::readFile() {
-   
     initVideoState();
      
     int ret = 0;
     ret = avformat_open_input(&_fmtCtx,_filename,nullptr,nullptr); //创建解封装上下文、打开文件
-    END(avformat_open_input);
-    //检索流信息
-    ret = avformat_find_stream_info(_fmtCtx,nullptr);
-    END(avformat_find_stream_info);
-    //打印流信息到控制台
+    ret = avformat_find_stream_info(_fmtCtx,nullptr); //检索流信息
     av_dump_format(_fmtCtx,0,_filename,0);
     fflush(stderr);
     //初始化音频信息

@@ -280,7 +280,7 @@ void stateChanged(void *hhObjectInstance) {
 }
 #pragma mark 音视频解码器初始化完毕
 -(void)initFinished {
-    
+    cout<< " method  ---  initFinished " << endl;
 }
 void initFinished(void *hhObjectInstance) { 
     dispatch_async(dispatch_get_main_queue(), ^{
