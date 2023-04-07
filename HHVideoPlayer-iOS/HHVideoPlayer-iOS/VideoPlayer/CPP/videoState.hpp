@@ -31,7 +31,7 @@ static int av_sync_type = AV_SYNC_AUDIO_MASTER;
 static int infinite_buffer = -1;
 static int64_t start_time = AV_NOPTS_VALUE;
 static int64_t duration = AV_NOPTS_VALUE;
-
+static int decoder_reorder_pts = -1;
 
 typedef struct MyAVPacketList {
     AVPacket pkt;// 类型为AVPacket 的结构体，用于存储音视频数据包
@@ -43,6 +43,7 @@ typedef struct Frame {
     AVFrame *frame;//
     int serial ; //frame 的序列号
     double pts; // 帧的呈现时间戳
+    int64_t pos; // 帧在输入文件中的字节位置
     double duration; // 帧的持续时间
     int width;
     int height;

@@ -69,10 +69,201 @@ bool VideoPlayer::isPlaying(){
     return _state == VideoPlayer::Playing;
 }
 
-#pragma mark - thread
-static int audio_thread(void *arg)
+#pragma mark - thread 
+// 用于返回帧队列（FrameQueue）中可写的帧的指针
+static Frame *frame_queue_peek_writable(FrameQueue *f)
+{ // ，它会在帧队列中有空间可用之前一直等待，并阻塞当前线程，直到有新的帧可被写入队列
+    /* wait until we have space to put a new frame */
+    SDL_LockMutex(f->mutex);
+    while (f->size >= f->max_size &&
+           !f->pktq->abort_request) {
+        SDL_CondWait(f->cond, f->mutex);
+    }
+    SDL_UnlockMutex(f->mutex);
+
+    if (f->pktq->abort_request)
+        return NULL;
+
+    return &f->queue[f->windex];
+}
+
+// 这段代码是用于将帧队列（FrameQueue）中的写入位置（windex）向前移动一个位置，并在队列中新增一帧的函数
+static void frame_queue_push(FrameQueue *f)
 {
-    return 0;
+    if (++f->windex == f->max_size)
+        f->windex = 0;
+    SDL_LockMutex(f->mutex);
+    f->size++;
+    SDL_CondSignal(f->cond); // 它会将写入位置（windex）向前移动一个位置，并检查是否已经移动到队列的末尾。如果已经到了队列末尾，它会将写入位置（windex）重置为 0。
+    SDL_UnlockMutex(f->mutex);
+}
+
+static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial)
+{
+    MyAVPacketList *pkt1;
+    int ret; // 定义变量pkt1和ret，分别用于存储数据包的地址和函数返回值
+    SDL_LockMutex(q->mutex); // SDL_LockMutex(q->mutex)：锁定队列的互斥锁，保证线程安全
+    for (;;) { // 循环处理数据包获取请求，直到获取到数据包或者队列被中止。
+        if (q->abort_request) {
+            ret = -1;
+            break;
+        }
+        pkt1 = q->first_pkt; // 判断队列中是否有数据包可用，如果有，取出队列中的第一个数据包并更新队列信息。
+        if (pkt1) {
+            q->first_pkt = pkt1->next;
+            if (!q->first_pkt)
+                q->last_pkt = NULL;
+            q->nb_packets--;
+            q->size -= pkt1->pkt.size + sizeof(*pkt1);
+            q->duration -= pkt1->pkt.duration;
+            *pkt = pkt1->pkt;
+            if (serial)
+                *serial = pkt1->serial;
+            av_free(pkt1);
+            ret = 1;
+            break;
+        } else if (!block) { // 如果没有数据包可用，且不需要阻塞等待，则返回0。
+            ret = 0;
+            break;
+        } else { // 如果没有数据包可用，但需要阻塞等待，则调用SDL_CondWait函数等待条件变量的信号。
+            SDL_CondWait(q->cond, q->mutex);
+        }
+    }
+    SDL_UnlockMutex(q->mutex); // SDL_UnlockMutex(q->mutex)：解锁队列的互斥锁，释放线程安全控制。
+    return ret;
+}
+
+static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
+    int ret = AVERROR(EAGAIN);
+    for (;;) {
+        AVPacket pkt;
+        if (d->queue->serial == d->pkt_serial) {
+            do {
+                if (d->queue->abort_request)
+                    return -1;
+                switch (d->avctx->codec_type) {
+                    case AVMEDIA_TYPE_UNKNOWN:
+                        break;
+                    case AVMEDIA_TYPE_VIDEO:
+                        ret = avcodec_receive_frame(d->avctx, frame);
+                        if (ret >= 0) {
+                            if (decoder_reorder_pts == -1) {
+                                frame->pts = frame->best_effort_timestamp;
+                            }else if (!decoder_reorder_pts) {
+                                frame->pts = frame->pkt_dts;
+                            }
+                        }
+                        break;
+                    case AVMEDIA_TYPE_AUDIO: {
+                        ret = avcodec_receive_frame(d->avctx, frame);
+                        if (ret >= 0) {
+                            AVRational tb = (AVRational){1, frame->sample_rate};
+                            if (frame->pts != AV_NOPTS_VALUE){
+                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
+                            }
+                            else if (d->next_pts != AV_NOPTS_VALUE){
+                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
+                            }
+                            if (frame->pts != AV_NOPTS_VALUE) {
+                                d->next_pts = frame->pts + frame->nb_samples;
+                                d->next_pts_tb = tb;
+                            }
+                        }
+                        break;
+                    }
+                    case AVMEDIA_TYPE_DATA:
+                        break;
+                    case AVMEDIA_TYPE_SUBTITLE:
+                        break;
+                    case AVMEDIA_TYPE_ATTACHMENT:
+                        break;
+                    case AVMEDIA_TYPE_NB:
+                        break;
+                }
+                if (ret == AVERROR_EOF) {
+                    d->finished = d->pkt_serial;
+                    avcodec_flush_buffers(d->avctx);
+                    return 0;
+                }
+                if (ret >= 0) {
+                    return 1;
+                }
+            } while (ret != AVERROR(EAGAIN));
+        }
+        do { // 首先，它会检查packet队列中是否有待解码的数据包，如果队列中没有待解码的数据包，则会通过SDL_CondSignal函数发出一个信号，等待队列中有新的数据包加入
+            if (d->queue->nb_packets == 0){
+                SDL_CondSignal(d->empty_queue_cond);
+            }
+            if (d->packet_pending) {
+                // 如果队列中有数据包，它会检查是否有未解码的packet数据包，如果有，则将其移动到pkt变量中，并将packet_pending标志位设置为0
+                av_packet_move_ref(&pkt, &d->pkt);
+                d->packet_pending = 0;
+            } else { // 如果队列中没有未解码的packet数据包，则使用packet_queue_get函数从队列中获取一个packet数据包
+                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0) {
+                    return -1;
+                }
+            }
+            if (d->queue->serial == d->pkt_serial)
+                break;
+            av_packet_unref(&pkt);
+        } while (1);
+        
+        if (pkt.data == flush_pkt.data) {
+            avcodec_flush_buffers(d->avctx);
+            d->finished = 0;
+            d->next_pts = d->start_pts;
+            d->next_pts_tb = d->start_pts_tb;
+        }else {
+            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) { // 如果是字幕解码器
+                int got_frame = 0;
+                ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, &pkt); // 则调用avcodec_decode_subtitle2函数进行字幕解码，并根据返回值设置ret的值
+                if (ret < 0) {// 如果got_frame为1且pkt.data为NULL，则将packet_pending标志位设置为1，将pkt数据包的引用移动到d->pkt中，并将ret的值设置为0
+                    ret = AVERROR(EAGAIN); // 否则将ret的值设置为AVERROR(EAGAIN)或AVERROR_EOF
+                } else {
+                    if (got_frame && !pkt.data) { //
+                       d->packet_pending = 1;
+                       av_packet_move_ref(&d->pkt, &pkt);
+                    }
+                    ret = got_frame ? 0 : (pkt.data ? AVERROR(EAGAIN) : AVERROR_EOF);
+                }
+            } else {
+                if (avcodec_send_packet(d->avctx, &pkt) == AVERROR(EAGAIN)) {// 如果是音频或视频解码器，则调用avcodec_send_packet函数将pkt数据包送入解码器进行解码
+                    av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+                    d->packet_pending = 1;// 并将pkt数据包的引用移动到d->pkt中，以便下一轮解码使用。如果返回值不为AVERROR(EAGAIN)，则根据解码结果设置ret的值。
+                    av_packet_move_ref(&d->pkt, &pkt);
+//                    最后，使用av_packet_unref函数释放pkt数据包，避免内存泄漏。
+                }
+            }
+            av_packet_unref(&pkt);
+        }
+    }
+}
+
+int audio_thread(void *arg)
+{
+    cout<<"aaaaaaaa"<<endl;
+    VideoState *is = (VideoState *)arg;
+    AVFrame *frame = av_frame_alloc();
+    Frame *af;
+    int got_frame = 0;
+    AVRational tb;
+    int ret = 0;
+    
+    do {
+//        got_frame = decoder_decode_frame(&is->auddec, frame, NULL); // 有bug～～～～～～
+        if (got_frame) {
+            tb = (AVRational){1, frame->sample_rate};
+            af = frame_queue_peek_writable(&is->sampq);
+            af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+            af->pos = frame->pkt_pos;
+            af->serial = is->auddec.pkt_serial;
+            af->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
+            av_frame_move_ref(af->frame, frame);
+            frame_queue_push(&is->sampq);
+        }
+        
+    } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
+    return ret;
 }
 
 #pragma mark - setFilename
@@ -149,10 +340,10 @@ static void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, 
 
 static void packet_queue_start(PacketQueue *q)
 {
-    SDL_LockMutex(q->mutex); // 锁定互斥锁，保证线程安全。
-    q->abort_request = 0; // 清除队列中止标志位，表示队列可以开始正常运行。
-    packet_queue_put_private(q, &flush_pkt); // 在队列中加入一个名为flush_pkt的数据包，作为队列的起始标志，可以清空队列中的所有数据
-    SDL_UnlockMutex(q->mutex); // 解锁互斥锁，释放线程安全控制。
+//    SDL_LockMutex(q->mutex); // 锁定互斥锁，保证线程安全。
+//    q->abort_request = 0; // 清除队列中止标志位，表示队列可以开始正常运行。
+//    packet_queue_put_private(q, &flush_pkt); // 在队列中加入一个名为flush_pkt的数据包，作为队列的起始标志，可以清空队列中的所有数据
+//    SDL_UnlockMutex(q->mutex); // 解锁互斥锁，释放线程安全控制。
 }
 
 static int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg)
@@ -197,9 +388,6 @@ static int stream_component_open(VideoState *is, int stream_index)
     AVFormatContext *ic = is->ic; // 获取VideoState结构体中的AVFormatContext指针，该指针包含了媒体文件的相关信息。
     AVCodecContext *avctx;
     AVCodec *codec;
-    const char *forced_codec_name = NULL;
-    AVDictionary *opts = NULL;
-    AVDictionaryEntry *t = NULL;
     
     int sample_rate, nb_channels;
     int64_t channel_layout;
@@ -210,13 +398,9 @@ static int stream_component_open(VideoState *is, int stream_index)
          return -1;
     
     avctx = avcodec_alloc_context3(NULL);
-    
     ret = avcodec_parameters_to_context(avctx, ic->streams[stream_index]->codecpar);
-   
     avctx->pkt_timebase = ic->streams[stream_index]->time_base;
-
     codec = avcodec_find_decoder(avctx->codec_id);
-    
     avctx->codec_id = codec->id; // 它首先将找到的解码器的ID分配给AVCodecContext结构体的codec_id字段
     avctx->lowres = stream_lowres;
     ret = avcodec_open2(avctx, codec, nullptr);
@@ -293,10 +477,10 @@ static int is_realtime(AVFormatContext *s)
     return 0;
 }
 
-static int frame_queue_nb_remaining(FrameQueue *f)
-{ // 段代码用于获取帧队列（FrameQueue）中尚未读取的帧数
-    return f->size - f->rindex_shown;
-}
+//static int frame_queue_nb_remaining(FrameQueue *f)
+//{ // 段代码用于获取帧队列（FrameQueue）中尚未读取的帧数
+//    return f->size - f->rindex_shown;
+//}
 
 static int packet_queue_put(PacketQueue *q, AVPacket *pkt)
 {
@@ -343,7 +527,6 @@ static void init_clock(Clock *c, int *queue_serial)
 }
 
 #pragma mark - 公有方法
-
 static int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue) {
     bool cStreamId = stream_id < 0 ;
     bool cAbortRequest = queue->abort_request > 0;
@@ -358,12 +541,12 @@ static int read_thread(void *arg)
     int err, i, ret;
     int st_index[AVMEDIA_TYPE_NB];
     AVPacket pkt1, *pkt = &pkt1;
-    int64_t stream_start_time;
+    int64_t stream_start_time = 0;
     int pkt_in_play_range = 0;
-    AVDictionaryEntry *t;
+//    AVDictionaryEntry *t;
     SDL_mutex *wait_mutex = SDL_CreateMutex();
-    int scan_all_pmts_set = 0;
-    int64_t pkt_ts;
+//    int scan_all_pmts_set = 0;
+    int64_t pkt_ts = 0;
      
     if (!wait_mutex) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
@@ -389,7 +572,7 @@ static int read_thread(void *arg)
     
     for (i = 0; i < ic->nb_streams; i++) {
         AVStream *st = ic->streams[i];
-        enum AVMediaType type = st->codecpar->codec_type;
+//        enum AVMediaType type = st->codecpar->codec_type;
         st->discard = AVDISCARD_ALL; // AVDISCARD_ALL 表示全部丢弃
     }
     
@@ -400,7 +583,7 @@ static int read_thread(void *arg)
     if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
         AVStream *st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
         AVCodecParameters *codecpar = st->codecpar;
-        AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
+//        AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL); //这个拿到的值很奇怪，感觉不正确
         if (codecpar->width) {
             // 设置获取到的  width 和 height
         }
@@ -434,52 +617,53 @@ static int read_thread(void *arg)
 //            if(is->queue_attachments_req) { //将输入流中的附加图片放到 视频流队列中
 //
 //            }
-            
-            bool conditionA = infinite_buffer<1;
-            bool conditionB = is->audioq.size + is->videoq.size > MAX_QUEUE_SIZE;//音视频累积
-            bool conditionC = stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq);
-            bool conditionD = stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq);
-            if (conditionA && (conditionB || (conditionC && conditionD))) {
-                SDL_LockMutex(wait_mutex);
-                SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
-                SDL_UnlockMutex(wait_mutex);
-                continue;
-            }
-            ret = av_read_frame(ic, pkt);
-            if (ret < 0) {
-                if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
-                    if (is->video_stream >= 0){
-                        packet_queue_put_nullpacket(&is->videoq, is->video_stream);
-                    }
-                    if (is->audio_stream >= 0){
-                        packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
-                    }
-                    is->eof = 1;
-                }
-                if (ic->pb && ic->pb->error)
-                    break;
-                SDL_LockMutex(wait_mutex);
-                SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
-                SDL_UnlockMutex(wait_mutex);
-                continue;
-            } else {
-                is->eof = 0;
-            }
-           
-           bool temp = (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) * av_q2d(ic->streams[pkt->stream_index]->time_base) - (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000 <= ((double)duration / 1000000);
-            
-            stream_start_time = ic->streams[pkt->stream_index]->start_time;
-            pkt_ts = pkt->pts = AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
-            pkt_in_play_range = duration == AV_NOPTS_VALUE || temp;
-            if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
-                packet_queue_put(&is->audioq, pkt);
-            }else if (pkt->stream_index == is->video_stream && pkt_in_play_range
-                      && !(is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
-                packet_queue_put(&is->videoq, pkt);
-            } else {
-                av_packet_unref(pkt);
-            }
+        bool conditionA = infinite_buffer<1;
+        bool conditionB = is->audioq.size + is->videoq.size > MAX_QUEUE_SIZE;//音视频累积
+        bool conditionC = stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq);
+        bool conditionD = stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq);
+        if (conditionA && (conditionB || (conditionC && conditionD))) {
+            SDL_LockMutex(wait_mutex);
+            SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+            SDL_UnlockMutex(wait_mutex);
+            continue;
         }
+        ret = av_read_frame(ic, pkt);
+        if (ret < 0) {
+            if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
+                if (is->video_stream >= 0) {
+                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+                }
+                if (is->audio_stream >= 0) {
+                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
+                }
+                is->eof = 1;
+            }
+               if (ic->pb && ic->pb->error)
+                break;
+            SDL_LockMutex(wait_mutex);
+            SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+            SDL_UnlockMutex(wait_mutex);
+            continue;
+        } else {
+            is->eof = 0;
+        }
+        //检查数据包是否在用户指定的播放范围内，如果是则将其加入队列，否则将其丢弃。 这段贼难看不懂
+        stream_start_time = ic->streams[pkt->stream_index]->start_time;
+        pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
+        pkt_in_play_range = duration == AV_NOPTS_VALUE ||
+        (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
+        av_q2d(ic->streams[pkt->stream_index]->time_base) -
+        (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000
+        <= ((double)duration / 1000000);
+        if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
+            packet_queue_put(&is->audioq, pkt);
+        } else if (pkt->stream_index == is->video_stream && pkt_in_play_range
+                   && !(is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+            packet_queue_put(&is->videoq, pkt);
+        }   else {
+            av_packet_unref(pkt);
+        }
+    }
         ret = 0;
     return 0;
 }

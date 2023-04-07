@@ -51,6 +51,7 @@
 		D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */; };
 		D1DB675B29E008CA00D90430 /* videoState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675929E008CA00D90430 /* videoState.cpp */; };
 		D1DB675E29E02C4500D90430 /* cmdutils.c in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675D29E02C4500D90430 /* cmdutils.c */; };
+		D1DB676129E06BD700D90430 /* videoPlayerDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */; };
 		FC7007B0B55CDA711D7DB8D2 /* Pods_HHVideoPlayer_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C355B2828AD2B34D5202093 /* Pods_HHVideoPlayer_iOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -336,6 +337,7 @@
 		D1DB675A29E008CA00D90430 /* videoState.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = videoState.hpp; sourceTree = "<group>"; };
 		D1DB675C29E02C4500D90430 /* cmdutils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmdutils.h; sourceTree = "<group>"; };
 		D1DB675D29E02C4500D90430 /* cmdutils.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = cmdutils.c; sourceTree = "<group>"; };
+		D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayerDecoder.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -862,6 +864,7 @@
 				D176325229DDC22900D25BA7 /* PlayerCInterface.h */,
 				D176324629DDB44700D25BA7 /* videoPlayer.h */,
 				D176324529DDB44700D25BA7 /* videoPlayer.cpp */,
+				D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */,
 				D1DB675C29E02C4500D90430 /* cmdutils.h */,
 				D1DB675D29E02C4500D90430 /* cmdutils.c */,
 				D1DB675929E008CA00D90430 /* videoState.cpp */,
@@ -1012,6 +1015,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D176310C29DDAF6D00D25BA7 /* HHBaseViewController.m in Sources */,
+				D1DB676129E06BD700D90430 /* videoPlayerDecoder.cpp in Sources */,
 				D17630F929DDAE0B00D25BA7 /* ViewController.m in Sources */,
 				D17630F329DDAE0B00D25BA7 /* AppDelegate.m in Sources */,
 				D1DB675E29E02C4500D90430 /* cmdutils.c in Sources */,

@@ -96,7 +96,8 @@ public:
     void setSelf(void *self);
     int someMethod (void *objectiveCObject, void *aParameter);
     void *self;
-    
+     
+    int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub);
     
 private:
     /************** 音频相关 **************/
@@ -184,5 +185,6 @@ private:
     void initVideoState();
     
     VideoState *is;// 用于存储音视频文件的信息状态用
+    
 };
 #endif /* videoPlayer_hpp */
