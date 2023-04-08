@@ -13,7 +13,7 @@
 #include "condmutex.h"
 #include <iostream>
 #include "videoState.hpp"
-using namespace std;
+//using namespace std;
 #include "PlayerCInterface.h"
 
 
@@ -36,9 +36,7 @@ using namespace std;
 #define CONTINUE(func) CODE(func,continue;)
 
 #define BREAK(func) CODE(func,break;)
-/*
- * 预处理视频，不负责显示、渲染视频
- */
+/*  预处理视频，不负责显示、渲染视频 */
 class VideoPlayer
 {
 public:

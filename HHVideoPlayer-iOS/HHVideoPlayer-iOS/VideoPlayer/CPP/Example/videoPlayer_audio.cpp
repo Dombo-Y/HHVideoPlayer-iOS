@@ -41,16 +41,10 @@ int VideoPlayer::initSwr(){
     _aSwrOutSpec.chs = av_get_channel_layout_nb_channels(_aSwrOutSpec.chLayout);
     _aSwrOutSpec.bytesPerSampleFrame = _aSwrOutSpec.chs * av_get_bytes_per_sample(_aSwrOutSpec.sampleFmt);
     //创建重采样上下文
-    _aSwrCtx = swr_alloc_set_opts(nullptr,
-                                  // 输出参数
-                                  _aSwrOutSpec.chLayout,
-                                  _aSwrOutSpec.sampleFmt,
-                                  _aSwrOutSpec.sampleRate,
-                                  // 输入参数
-                                  _aSwrInSpec.chLayout,
-                                  _aSwrInSpec.sampleFmt,
-                                  _aSwrInSpec.sampleRate,
+    _aSwrCtx = swr_alloc_set_opts(nullptr, _aSwrOutSpec.chLayout, _aSwrOutSpec.sampleFmt, _aSwrOutSpec.sampleRate,
+                                  _aSwrInSpec.chLayout, _aSwrInSpec.sampleFmt,  _aSwrInSpec.sampleRate,
                                   0, nullptr);
+     
     if (!_aSwrCtx) {
         cout << "swr_alloc_set_opts error" << endl;
         return -1;

@@ -881,9 +881,9 @@
 				D1AD0EEE29E1A62C00F8AB68 /* condmutex.h */,
 				D1AD0EEF29E1A62C00F8AB68 /* cmdutils.c */,
 				D1AD0EF029E1A62C00F8AB68 /* PlayerCInterface.h */,
+				D1AD0EF329E1A62C00F8AB68 /* videoPlayer.h */,
 				D1AD0EF129E1A62C00F8AB68 /* videoPlayer_video.cpp */,
 				D1AD0EF229E1A62C00F8AB68 /* videoPlayer_audio.cpp */,
-				D1AD0EF329E1A62C00F8AB68 /* videoPlayer.h */,
 			);
 			path = Example;
 			sourceTree = "<group>";
