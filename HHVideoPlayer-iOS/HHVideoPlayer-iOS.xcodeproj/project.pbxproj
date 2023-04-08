@@ -15,7 +15,6 @@
 		D176310129DDAE0E00D25BA7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D17630FF29DDAE0E00D25BA7 /* LaunchScreen.storyboard */; };
 		D176310429DDAE0E00D25BA7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D176310329DDAE0E00D25BA7 /* main.m */; };
 		D176310C29DDAF6D00D25BA7 /* HHBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D176310B29DDAF6D00D25BA7 /* HHBaseViewController.m */; };
-		D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm */; };
 		D176311229DDB00800D25BA7 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D176311129DDB00800D25BA7 /* AVFoundation.framework */; };
 		D176311429DDB00F00D25BA7 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D176311329DDB00F00D25BA7 /* GameController.framework */; };
 		D176311629DDB01500D25BA7 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D176311529DDB01500D25BA7 /* UIKit.framework */; };
@@ -45,14 +44,15 @@
 		D176323C29DDB0D400D25BA7 /* SDL_config.h.in in Resources */ = {isa = PBXBuildFile; fileRef = D176321E29DDB0D200D25BA7 /* SDL_config.h.in */; };
 		D176323D29DDB0D400D25BA7 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D176322D29DDB0D200D25BA7 /* libSDL2.a */; };
 		D176323E29DDB0D400D25BA7 /* output.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = D176322F29DDB0D200D25BA7 /* output.mp4 */; };
-		D176324329DDB3D800D25BA7 /* condmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324129DDB3D800D25BA7 /* condmutex.cpp */; };
-		D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324529DDB44700D25BA7 /* videoPlayer.cpp */; };
-		D176324B29DDB62800D25BA7 /* videoPlayer_video.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */; };
-		D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */; };
-		D1AD0ED829E1554100F8AB68 /* HHVideoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0ED629E1554100F8AB68 /* HHVideoPlayer.cpp */; };
-		D1DB675B29E008CA00D90430 /* videoState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675929E008CA00D90430 /* videoState.cpp */; };
-		D1DB675E29E02C4500D90430 /* cmdutils.c in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675D29E02C4500D90430 /* cmdutils.c */; };
-		D1DB676129E06BD700D90430 /* videoPlayerDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */; };
+		D1AD0EFB29E1A62C00F8AB68 /* condmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EEC29E1A62C00F8AB68 /* condmutex.cpp */; };
+		D1AD0EFC29E1A62C00F8AB68 /* videoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EED29E1A62C00F8AB68 /* videoPlayer.cpp */; };
+		D1AD0EFD29E1A62C00F8AB68 /* cmdutils.c in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EEF29E1A62C00F8AB68 /* cmdutils.c */; };
+		D1AD0EFE29E1A62C00F8AB68 /* videoPlayer_video.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF129E1A62C00F8AB68 /* videoPlayer_video.cpp */; };
+		D1AD0EFF29E1A62C00F8AB68 /* videoPlayer_audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF229E1A62C00F8AB68 /* videoPlayer_audio.cpp */; };
+		D1AD0F0029E1A62C00F8AB68 /* HHVideoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF529E1A62C00F8AB68 /* HHVideoPlayer.cpp */; };
+		D1AD0F0129E1A62C00F8AB68 /* videoPlayerDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF629E1A62C00F8AB68 /* videoPlayerDecoder.cpp */; };
+		D1AD0F0229E1A62C00F8AB68 /* videoState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */; };
+		D1AD0F0329E1A62C00F8AB68 /* HHVideoPlayerViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EFA29E1A62C00F8AB68 /* HHVideoPlayerViewController.mm */; };
 		FC7007B0B55CDA711D7DB8D2 /* Pods_HHVideoPlayer_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C355B2828AD2B34D5202093 /* Pods_HHVideoPlayer_iOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -74,8 +74,6 @@
 		D176310329DDAE0E00D25BA7 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		D176310A29DDAF6D00D25BA7 /* HHBaseViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHBaseViewController.h; sourceTree = "<group>"; };
 		D176310B29DDAF6D00D25BA7 /* HHBaseViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HHBaseViewController.m; sourceTree = "<group>"; };
-		D176310E29DDAFCA00D25BA7 /* HHVideoPlayerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayerViewController.h; sourceTree = "<group>"; };
-		D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = HHVideoPlayerViewController.mm; sourceTree = "<group>"; };
 		D176311129DDB00800D25BA7 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		D176311329DDB00F00D25BA7 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		D176311529DDB01500D25BA7 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -327,20 +325,22 @@
 		D176322D29DDB0D200D25BA7 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libSDL2.a; sourceTree = "<group>"; };
 		D176322F29DDB0D200D25BA7 /* output.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = output.mp4; sourceTree = "<group>"; };
 		D176323F29DDB25A00D25BA7 /* HHPrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHPrefixHeader.pch; sourceTree = "<group>"; };
-		D176324129DDB3D800D25BA7 /* condmutex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = condmutex.cpp; sourceTree = "<group>"; };
-		D176324229DDB3D800D25BA7 /* condmutex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = condmutex.h; sourceTree = "<group>"; };
-		D176324529DDB44700D25BA7 /* videoPlayer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer.cpp; sourceTree = "<group>"; };
-		D176324629DDB44700D25BA7 /* videoPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = videoPlayer.h; sourceTree = "<group>"; };
-		D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_video.cpp; sourceTree = "<group>"; };
-		D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_audio.cpp; sourceTree = "<group>"; };
-		D176325229DDC22900D25BA7 /* PlayerCInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlayerCInterface.h; sourceTree = "<group>"; };
-		D1AD0ED629E1554100F8AB68 /* HHVideoPlayer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HHVideoPlayer.cpp; sourceTree = "<group>"; };
-		D1AD0ED729E1554100F8AB68 /* HHVideoPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayer.h; sourceTree = "<group>"; };
-		D1DB675929E008CA00D90430 /* videoState.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoState.cpp; sourceTree = "<group>"; };
-		D1DB675A29E008CA00D90430 /* videoState.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = videoState.hpp; sourceTree = "<group>"; };
-		D1DB675C29E02C4500D90430 /* cmdutils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmdutils.h; sourceTree = "<group>"; };
-		D1DB675D29E02C4500D90430 /* cmdutils.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = cmdutils.c; sourceTree = "<group>"; };
-		D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayerDecoder.cpp; sourceTree = "<group>"; };
+		D1AD0EEB29E1A62C00F8AB68 /* cmdutils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cmdutils.h; sourceTree = "<group>"; };
+		D1AD0EEC29E1A62C00F8AB68 /* condmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = condmutex.cpp; sourceTree = "<group>"; };
+		D1AD0EED29E1A62C00F8AB68 /* videoPlayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer.cpp; sourceTree = "<group>"; };
+		D1AD0EEE29E1A62C00F8AB68 /* condmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = condmutex.h; sourceTree = "<group>"; };
+		D1AD0EEF29E1A62C00F8AB68 /* cmdutils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cmdutils.c; sourceTree = "<group>"; };
+		D1AD0EF029E1A62C00F8AB68 /* PlayerCInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayerCInterface.h; sourceTree = "<group>"; };
+		D1AD0EF129E1A62C00F8AB68 /* videoPlayer_video.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_video.cpp; sourceTree = "<group>"; };
+		D1AD0EF229E1A62C00F8AB68 /* videoPlayer_audio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_audio.cpp; sourceTree = "<group>"; };
+		D1AD0EF329E1A62C00F8AB68 /* videoPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = videoPlayer.h; sourceTree = "<group>"; };
+		D1AD0EF429E1A62C00F8AB68 /* videoState.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = videoState.hpp; sourceTree = "<group>"; };
+		D1AD0EF529E1A62C00F8AB68 /* HHVideoPlayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HHVideoPlayer.cpp; sourceTree = "<group>"; };
+		D1AD0EF629E1A62C00F8AB68 /* videoPlayerDecoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayerDecoder.cpp; sourceTree = "<group>"; };
+		D1AD0EF729E1A62C00F8AB68 /* HHVideoPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayer.h; sourceTree = "<group>"; };
+		D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoState.cpp; sourceTree = "<group>"; };
+		D1AD0EF929E1A62C00F8AB68 /* HHVideoPlayerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayerViewController.h; sourceTree = "<group>"; };
+		D1AD0EFA29E1A62C00F8AB68 /* HHVideoPlayerViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HHVideoPlayerViewController.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -410,7 +410,7 @@
 		D17630F029DDAE0B00D25BA7 /* HHVideoPlayer-iOS */ = {
 			isa = PBXGroup;
 			children = (
-				D176310D29DDAF8800D25BA7 /* VideoPlayer */,
+				D1AD0EE829E1A62C00F8AB68 /* VideoPlayer */,
 				D17630F129DDAE0B00D25BA7 /* AppDelegate.h */,
 				D17630F229DDAE0B00D25BA7 /* AppDelegate.m */,
 				D17630F429DDAE0B00D25BA7 /* SceneDelegate.h */,
@@ -429,16 +429,6 @@
 				D176310329DDAE0E00D25BA7 /* main.m */,
 			);
 			path = "HHVideoPlayer-iOS";
-			sourceTree = "<group>";
-		};
-		D176310D29DDAF8800D25BA7 /* VideoPlayer */ = {
-			isa = PBXGroup;
-			children = (
-				D176324029DDB3BE00D25BA7 /* CPP */,
-				D176310E29DDAFCA00D25BA7 /* HHVideoPlayerViewController.h */,
-				D176310F29DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm */,
-			);
-			path = VideoPlayer;
 			sourceTree = "<group>";
 		};
 		D176312D29DDB0D100D25BA7 /* Lib */ = {
@@ -859,25 +849,43 @@
 			path = Resource;
 			sourceTree = "<group>";
 		};
-		D176324029DDB3BE00D25BA7 /* CPP */ = {
+		D1AD0EE829E1A62C00F8AB68 /* VideoPlayer */ = {
 			isa = PBXGroup;
 			children = (
-				D176324129DDB3D800D25BA7 /* condmutex.cpp */,
-				D176324229DDB3D800D25BA7 /* condmutex.h */,
-				D176325229DDC22900D25BA7 /* PlayerCInterface.h */,
-				D176324629DDB44700D25BA7 /* videoPlayer.h */,
-				D176324529DDB44700D25BA7 /* videoPlayer.cpp */,
-				D1AD0ED729E1554100F8AB68 /* HHVideoPlayer.h */,
-				D1AD0ED629E1554100F8AB68 /* HHVideoPlayer.cpp */,
-				D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */,
-				D1DB675C29E02C4500D90430 /* cmdutils.h */,
-				D1DB675D29E02C4500D90430 /* cmdutils.c */,
-				D1DB675929E008CA00D90430 /* videoState.cpp */,
-				D1DB675A29E008CA00D90430 /* videoState.hpp */,
-				D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */,
-				D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */,
+				D1AD0EE929E1A62C00F8AB68 /* CPP */,
+				D1AD0EF929E1A62C00F8AB68 /* HHVideoPlayerViewController.h */,
+				D1AD0EFA29E1A62C00F8AB68 /* HHVideoPlayerViewController.mm */,
+			);
+			path = VideoPlayer;
+			sourceTree = "<group>";
+		};
+		D1AD0EE929E1A62C00F8AB68 /* CPP */ = {
+			isa = PBXGroup;
+			children = (
+				D1AD0EEA29E1A62C00F8AB68 /* Example */,
+				D1AD0EF429E1A62C00F8AB68 /* videoState.hpp */,
+				D1AD0EF529E1A62C00F8AB68 /* HHVideoPlayer.cpp */,
+				D1AD0EF629E1A62C00F8AB68 /* videoPlayerDecoder.cpp */,
+				D1AD0EF729E1A62C00F8AB68 /* HHVideoPlayer.h */,
+				D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */,
 			);
 			path = CPP;
+			sourceTree = "<group>";
+		};
+		D1AD0EEA29E1A62C00F8AB68 /* Example */ = {
+			isa = PBXGroup;
+			children = (
+				D1AD0EEB29E1A62C00F8AB68 /* cmdutils.h */,
+				D1AD0EEC29E1A62C00F8AB68 /* condmutex.cpp */,
+				D1AD0EED29E1A62C00F8AB68 /* videoPlayer.cpp */,
+				D1AD0EEE29E1A62C00F8AB68 /* condmutex.h */,
+				D1AD0EEF29E1A62C00F8AB68 /* cmdutils.c */,
+				D1AD0EF029E1A62C00F8AB68 /* PlayerCInterface.h */,
+				D1AD0EF129E1A62C00F8AB68 /* videoPlayer_video.cpp */,
+				D1AD0EF229E1A62C00F8AB68 /* videoPlayer_audio.cpp */,
+				D1AD0EF329E1A62C00F8AB68 /* videoPlayer.h */,
+			);
+			path = Example;
 			sourceTree = "<group>";
 		};
 		FD5E2B5E19F0AF4844032CBA /* Frameworks */ = {
@@ -1019,21 +1027,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1AD0F0329E1A62C00F8AB68 /* HHVideoPlayerViewController.mm in Sources */,
 				D176310C29DDAF6D00D25BA7 /* HHBaseViewController.m in Sources */,
-				D1DB676129E06BD700D90430 /* videoPlayerDecoder.cpp in Sources */,
 				D17630F929DDAE0B00D25BA7 /* ViewController.m in Sources */,
+				D1AD0EFB29E1A62C00F8AB68 /* condmutex.cpp in Sources */,
 				D17630F329DDAE0B00D25BA7 /* AppDelegate.m in Sources */,
-				D1DB675E29E02C4500D90430 /* cmdutils.c in Sources */,
+				D1AD0EFE29E1A62C00F8AB68 /* videoPlayer_video.cpp in Sources */,
+				D1AD0EFC29E1A62C00F8AB68 /* videoPlayer.cpp in Sources */,
+				D1AD0F0029E1A62C00F8AB68 /* HHVideoPlayer.cpp in Sources */,
+				D1AD0EFF29E1A62C00F8AB68 /* videoPlayer_audio.cpp in Sources */,
+				D1AD0F0129E1A62C00F8AB68 /* videoPlayerDecoder.cpp in Sources */,
+				D1AD0F0229E1A62C00F8AB68 /* videoState.cpp in Sources */,
+				D1AD0EFD29E1A62C00F8AB68 /* cmdutils.c in Sources */,
 				D176310429DDAE0E00D25BA7 /* main.m in Sources */,
-				D176324B29DDB62800D25BA7 /* videoPlayer_video.cpp in Sources */,
 				D17630F629DDAE0B00D25BA7 /* SceneDelegate.m in Sources */,
-				D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */,
-				D176324329DDB3D800D25BA7 /* condmutex.cpp in Sources */,
-				D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm in Sources */,
-				D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */,
-				D1AD0ED829E1554100F8AB68 /* HHVideoPlayer.cpp in Sources */,
 				D176323A29DDB0D400D25BA7 /* OpenGLView20.m in Sources */,
-				D1DB675B29E008CA00D90430 /* videoState.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1180,6 +1188,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5QM6X2349E;
+				GCC_PREFIX_HEADER = "/Users/yindongbo/HHVideoPlayer-iOS/HHVideoPlayer-iOS/HHVideoPlayer-iOS/HHPrefixHeader.pch";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1195,6 +1204,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1211,6 +1221,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "";
 			};
 			name = Debug;
 		};
@@ -1223,6 +1234,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5QM6X2349E;
+				GCC_PREFIX_HEADER = "/Users/yindongbo/HHVideoPlayer-iOS/HHVideoPlayer-iOS/HHVideoPlayer-iOS/HHPrefixHeader.pch";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1238,6 +1250,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1254,6 +1267,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "";
 			};
 			name = Release;
 		};

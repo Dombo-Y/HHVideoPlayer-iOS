@@ -36,8 +36,8 @@ extern "C" {
 #include "libavcodec/avfft.h"
 #include "libswresample/swresample.h"
     
-#include "SDL_main.h"
-#include <SDL_thread.h>
+//#include "SDL_main.h"
+//#include <SDL_thread.h>
     
     
 #ifdef __cplusplus

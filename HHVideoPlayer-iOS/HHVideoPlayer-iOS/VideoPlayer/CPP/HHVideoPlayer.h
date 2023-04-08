@@ -52,6 +52,9 @@ private:
     void addAudioPkt(AVPacket *pkt);
     void addVideoPkt(AVPacket *pkt);
     void packet_queue_put_private(PacketQueue *q, AVPacket *pkt);
+    
+    int packet_queue_init(PacketQueue *q);
+    
      
 };
 #endif /* HHVideoPlayer_hpp */

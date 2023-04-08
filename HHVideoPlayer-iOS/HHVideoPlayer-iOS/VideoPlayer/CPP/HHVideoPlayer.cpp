@@ -8,50 +8,14 @@
 #include "HHVideoPlayer.h"
 #include <thread>
 #include<iostream>
- 
-using namespace std;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-    
-#include <libavcodec/avcodec.h>
-#include "libavutil/avstring.h"
-#include "libavutil/eval.h"
-#include "libavutil/mathematics.h"
-#include "libavutil/pixdesc.h"
-#include "libavutil/imgutils.h"
-#include "libavutil/dict.h"
-#include "libavutil/parseutils.h"
-#include "libavutil/samplefmt.h"
-#include "libavutil/avassert.h"
-#include "libavutil/time.h"
-#include "libavutil/bprint.h"
-#include "libavformat/avformat.h"
-#include "libavdevice/avdevice.h"
-#include "libswscale/swscale.h"
-#include "libavutil/opt.h"
-#include "libavcodec/avfft.h"
-#include "libswresample/swresample.h"
-    
-#include "SDL_main.h"
-#include <SDL_thread.h>
-    
-    
-#ifdef __cplusplus
-};
-#endif
 
 #define SAMPLE_RATE 44100 // 采样率
 #define SAMPLE_FORMAT AUDIO_S16LSB// 采样格式
 #define SAMPLE_SIZE SDL_AUDIO_BITSIZE(SAMPLE_FORMAT)// 采样大小
 #define CHANNELS 2 // 声道数
 #define SAMPLES 512 // 音频缓冲区的样本数量
-
-#include <SDL.h>
-#include <SDL_thread.h>
-
-
+  
+ 
 void HHVideoPlayer::initVideoState() {
     VideoState *iv =  (VideoState *)av_malloc(sizeof(VideoState));
     int ret;
@@ -64,8 +28,8 @@ void HHVideoPlayer::initVideoState() {
 //    ret = frame_queue_init(&iv->sampq, &iv->audioq, SAMPLE_QUEUE_SIZE, 1);
       
 //    初始化解码前的帧队列 PacketQueue
-//    ret = packet_queue_init(&iv->videoq);
-//    ret = packet_queue_init(&iv->audioq);
+    ret = packet_queue_init(&iv->videoq);
+    ret = packet_queue_init(&iv->audioq);
    
 //    初始化 Decoder
 //    iv->auddec = d
@@ -167,10 +131,11 @@ void HHVideoPlayer::readFile() {
     while (is->state != Stopped) {
         int vSize = is->videoq.size;
         int aSize = is->audioq.size;
-        if (vSize + aSize  > 1000) {
-//            SDL_Delay(10);
-            continue;; // 缓存足够大了就缓存
-        }
+//        if (vSize + aSize  > 10000) {
+////            SDL_Delay(10);
+//            cout<< " 缓存满了～～～～ " << endl ;
+//            continue;; // 缓存足够大了就缓存
+//        }
           
         av_format_inject_global_side_data(is->ic);
         ret = av_read_frame(is->ic, &aPacket);
@@ -179,14 +144,11 @@ void HHVideoPlayer::readFile() {
             if (aPacket.stream_index == is->audio_stream) {
                 addAudioPkt(&aPacket);
                 cout << &aPacket << "音频音频音频音频音频" << index  << endl;
-                if (index > 20) {
-                    cout << "aaaa" << endl;
-                }
             }else if (aPacket.stream_index == is->video_stream) {
 //                addVideoPkt(aPacket);
                 cout << &aPacket << "视频视频视频视频" << endl;
             }else {
-//                av_packet_unref(aPacket);
+                av_packet_unref(aPacket); 
             }
         }else if (ret == AVERROR_EOF) {
             if (vSize == 0 && aSize == 0) {
@@ -218,13 +180,14 @@ void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     q->nb_packets++;
     q->size += pkt1->pkt.size + sizeof(*pkt1);
     q->duration += pkt1->pkt.duration;
+    cout<< "音频帧大小～～" << pkt1->pkt.size <<endl;
 }
 
 
 void HHVideoPlayer::addAudioPkt(AVPacket *pkt) {
-//    SDL_LockMutex(is->audioq);
+    SDL_LockMutex(is->audioq.mutex);
     packet_queue_put_private(&is->audioq, pkt);
-//    SDL_UnlockMutex(is->audioq);
+    SDL_UnlockMutex(is->audioq.mutex);
 }
 
 void HHVideoPlayer::addVideoPkt(AVPacket *pkt) {
@@ -245,6 +208,20 @@ bool HHVideoPlayer::initAudioInfo() {
 bool HHVideoPlayer::initVideoInfo() {
     
     return true;
+}
+
+int HHVideoPlayer::packet_queue_init(PacketQueue *q) {
+    memset(q, 0, sizeof(PacketQueue));
+    q->mutex = SDL_CreateMutex();
+    if (!q->mutex) {
+        return AVERROR(ENOMEM);
+    }
+    q->cond = SDL_CreateCond();
+    if (!q->cond) {
+        return AVERROR(ENOMEM);
+    }
+    q->abort_request = 1;
+    return 0;
 }
 
  
