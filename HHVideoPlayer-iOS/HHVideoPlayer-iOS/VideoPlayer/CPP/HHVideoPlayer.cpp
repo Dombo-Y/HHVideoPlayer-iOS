@@ -48,6 +48,10 @@ extern "C" {
 #define CHANNELS 2 // 声道数
 #define SAMPLES 512 // 音频缓冲区的样本数量
 
+#include <SDL.h>
+#include <SDL_thread.h>
+
+
 void HHVideoPlayer::initVideoState() {
     VideoState *iv =  (VideoState *)av_malloc(sizeof(VideoState));
     int ret;
@@ -173,10 +177,13 @@ void HHVideoPlayer::readFile() {
         index ++;
         if (ret == 0) {
             if (aPacket.stream_index == is->audio_stream) {
-                addAudioPkt(aPacket);
+                addAudioPkt(&aPacket);
                 cout << &aPacket << "音频音频音频音频音频" << index  << endl;
+                if (index > 20) {
+                    cout << "aaaa" << endl;
+                }
             }else if (aPacket.stream_index == is->video_stream) {
-                addVideoPkt(aPacket);
+//                addVideoPkt(aPacket);
                 cout << &aPacket << "视频视频视频视频" << endl;
             }else {
 //                av_packet_unref(aPacket);
@@ -196,11 +203,31 @@ void HHVideoPlayer::readFile() {
 //    }
 }
 
-void HHVideoPlayer::addAudioPkt(AVPacket &pkt) {
-    
+void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
+    MyAVPacketList *pkt1;
+    pkt1 = (MyAVPacketList *)av_malloc(sizeof(MyAVPacketList));
+    pkt1->pkt = *pkt;
+    pkt1 -> next = NULL;
+    pkt1->serial = is->audioq.serial;
+    if (!q->last_pkt) {
+        q->first_pkt = pkt1;
+    }else {
+        q->last_pkt->next = pkt1;
+    }
+    q->last_pkt = pkt1;
+    q->nb_packets++;
+    q->size += pkt1->pkt.size + sizeof(*pkt1);
+    q->duration += pkt1->pkt.duration;
 }
 
-void HHVideoPlayer::addVideoPkt(AVPacket &pkt) {
+
+void HHVideoPlayer::addAudioPkt(AVPacket *pkt) {
+//    SDL_LockMutex(is->audioq);
+    packet_queue_put_private(&is->audioq, pkt);
+//    SDL_UnlockMutex(is->audioq);
+}
+
+void HHVideoPlayer::addVideoPkt(AVPacket *pkt) {
     
 }
 
