@@ -148,7 +148,7 @@ void HHVideoPlayer::readFile() {
 //                addVideoPkt(aPacket);
                 cout << &aPacket << "视频视频视频视频" << endl;
             }else {
-                av_packet_unref(aPacket); 
+//                av_packet_unref(aPacket);
             }
         }else if (ret == AVERROR_EOF) {
             if (vSize == 0 && aSize == 0) {
