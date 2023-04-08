@@ -15,11 +15,12 @@ extern "C" {
 }
 #include "Videoplayer.h"
 #import "OpenGLView20.h"
- 
+#import "HHVideoPlayer.h"
 
 @interface HHVideoPlayerViewController (){
 //    OpenGLView20 *_myview;
     VideoPlayer *_player;
+    HHVideoPlayer *_hhPlayer;
 }
 
 @property (nonatomic,copy)NSString * path;
@@ -52,11 +53,10 @@ extern "C" {
      
     const char *s = av_version_info();
     printf("ffmpeg版本:%s\n",s);
-    
-    //初始化播放器
-    _player = new VideoPlayer();
-    //大文件
-    _path = [[NSBundle mainBundle] pathForResource:@"output" ofType:@"mp4"];
+     
+    _player = new VideoPlayer();   //初始化播放器
+    _hhPlayer = new HHVideoPlayer();
+    _path = [[NSBundle mainBundle] pathForResource:@"output" ofType:@"mp4"]; //大文件
 }
 
 - (UIView *)contentView {
@@ -208,10 +208,15 @@ extern "C" {
     //传入文件路径
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         __strong typeof(weakSelf) strongSelf = weakSelf;
-        self->_player->setSelf((__bridge void *)strongSelf);
-        self->_player->setFilename(filename);
-//        self->_player->readFile();
-        self->_player->play();
+//        self->_player->setSelf((__bridge void *)strongSelf);
+//        self->_player->setFilename(filename);
+////        self->_player->readFile();
+//        self->_player->play();
+        
+        self->_hhPlayer->setSelf((__bridge void *)strongSelf);
+        self->_hhPlayer->setFilename(filename);
+        self->_hhPlayer->play();
+        
     });
 }
 

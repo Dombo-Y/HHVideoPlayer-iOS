@@ -49,6 +49,7 @@
 		D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324529DDB44700D25BA7 /* videoPlayer.cpp */; };
 		D176324B29DDB62800D25BA7 /* videoPlayer_video.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */; };
 		D176324E29DDB65C00D25BA7 /* videoPlayer_audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */; };
+		D1AD0ED829E1554100F8AB68 /* HHVideoPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0ED629E1554100F8AB68 /* HHVideoPlayer.cpp */; };
 		D1DB675B29E008CA00D90430 /* videoState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675929E008CA00D90430 /* videoState.cpp */; };
 		D1DB675E29E02C4500D90430 /* cmdutils.c in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675D29E02C4500D90430 /* cmdutils.c */; };
 		D1DB676129E06BD700D90430 /* videoPlayerDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */; };
@@ -333,6 +334,8 @@
 		D176324929DDB62800D25BA7 /* videoPlayer_video.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_video.cpp; sourceTree = "<group>"; };
 		D176324C29DDB65B00D25BA7 /* videoPlayer_audio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoPlayer_audio.cpp; sourceTree = "<group>"; };
 		D176325229DDC22900D25BA7 /* PlayerCInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlayerCInterface.h; sourceTree = "<group>"; };
+		D1AD0ED629E1554100F8AB68 /* HHVideoPlayer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HHVideoPlayer.cpp; sourceTree = "<group>"; };
+		D1AD0ED729E1554100F8AB68 /* HHVideoPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayer.h; sourceTree = "<group>"; };
 		D1DB675929E008CA00D90430 /* videoState.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = videoState.cpp; sourceTree = "<group>"; };
 		D1DB675A29E008CA00D90430 /* videoState.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = videoState.hpp; sourceTree = "<group>"; };
 		D1DB675C29E02C4500D90430 /* cmdutils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cmdutils.h; sourceTree = "<group>"; };
@@ -864,6 +867,8 @@
 				D176325229DDC22900D25BA7 /* PlayerCInterface.h */,
 				D176324629DDB44700D25BA7 /* videoPlayer.h */,
 				D176324529DDB44700D25BA7 /* videoPlayer.cpp */,
+				D1AD0ED729E1554100F8AB68 /* HHVideoPlayer.h */,
+				D1AD0ED629E1554100F8AB68 /* HHVideoPlayer.cpp */,
 				D1DB675F29E06BD700D90430 /* videoPlayerDecoder.cpp */,
 				D1DB675C29E02C4500D90430 /* cmdutils.h */,
 				D1DB675D29E02C4500D90430 /* cmdutils.c */,
@@ -1026,6 +1031,7 @@
 				D176324329DDB3D800D25BA7 /* condmutex.cpp in Sources */,
 				D176311029DDAFCA00D25BA7 /* HHVideoPlayerViewController.mm in Sources */,
 				D176324729DDB44700D25BA7 /* videoPlayer.cpp in Sources */,
+				D1AD0ED829E1554100F8AB68 /* HHVideoPlayer.cpp in Sources */,
 				D176323A29DDB0D400D25BA7 /* OpenGLView20.m in Sources */,
 				D1DB675B29E008CA00D90430 /* videoState.cpp in Sources */,
 			);

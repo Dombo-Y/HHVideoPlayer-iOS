@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include "HHPrefixHeader.pch"
 
-  
+using namespace std;
+
 #define VIDEO_PICTURE_QUEUE_SIZE 3 // 视频帧缓冲队列的大小，即存储待显示的视频帧的数量。
 #define SUBPICTURE_QUEUE_SIZE 16 // 字幕缓冲队列的大小，即存储待显示的字幕数据的数量。
 #define SAMPLE_QUEUE_SIZE 9 // 音频采样缓冲队列的大小，即存储待播放的音频采样数据的数量。
@@ -26,6 +27,13 @@ enum {
     AV_SYNC_VIDEO_MASTER, // 表示以视频作为主时钟进行同步。
     AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */ // 示以外部时钟作为主时钟进行同步。
 };
+
+typedef enum  {
+    Stopped = 0,
+    Playing,
+    Paused
+}HHVideoState;
+
 
 static int av_sync_type = AV_SYNC_AUDIO_MASTER;
 static int infinite_buffer = -1;
@@ -118,6 +126,11 @@ typedef struct VideoState {
     AVInputFormat *iformat ;//输入的媒体格式
     AVFormatContext *ic; //输入的媒体文件的上下文信息
     
+    AVCodecContext *audioCodecCtx;
+    AVCodecContext *videoCodecCtx;
+    AVCodec *aCodec;
+    AVCodec *vCodec;
+    
     int realtime; // 是否以实时模式进行播放
     
     int abort_request; // 是否终止媒体播放的请求
@@ -170,9 +183,18 @@ typedef struct VideoState {
     double audio_diff_threshold; // 音频差异的阈值
     int audio_diff_avg_count; // 音频差异的平均计数
     
+    bool  haveAudio; // 有音频
+    bool  haveVideo; // 有视频
+    
     int64_t start_pts; // 开始解码的时间戳
     AVRational start_pts_tb; // 开始解码的时间戳对应的时间基（timebase）
     
+    HHVideoState state = Stopped;
+    int seekTime = -1;
+     
+//    std::list<AVPacket> _aPktList;  //存放音频包的列表  ---- 跟随VideoPlayer生而生死而死，用对象不用指针
+//    std::list<AVPacket> _vPktList;  //存放视频包的列表 ---- 跟随VideoPlayer生而生死而死，用对象不用指针
+
 }VideoState;
 
 #endif /* videoState_hpp */

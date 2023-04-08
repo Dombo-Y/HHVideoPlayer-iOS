@@ -12,6 +12,38 @@
 #define AUDIO_MAX_PKT_SIZE 1000
 #define VIDEO_MAX_PKT_SIZE 500
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
+#include <libavcodec/avcodec.h>
+#include "libavutil/avstring.h"
+#include "libavutil/eval.h"
+#include "libavutil/mathematics.h"
+#include "libavutil/pixdesc.h"
+#include "libavutil/imgutils.h"
+#include "libavutil/dict.h"
+#include "libavutil/parseutils.h"
+#include "libavutil/samplefmt.h"
+#include "libavutil/avassert.h"
+#include "libavutil/time.h"
+#include "libavutil/bprint.h"
+#include "libavformat/avformat.h"
+#include "libavdevice/avdevice.h"
+#include "libswscale/swscale.h"
+#include "libavutil/opt.h"
+#include "libavcodec/avfft.h"
+#include "libswresample/swresample.h"
+    
+#include "SDL_main.h"
+#include <SDL_thread.h>
+    
+    
+#ifdef __cplusplus
+};
+#endif
+
 AVDictionary *format_opts, *codec_opts, *resample_opts;
 static const char* wanted_stream_spec[AVMEDIA_TYPE_NB] = {0};
 
@@ -73,13 +105,16 @@ bool VideoPlayer::isPlaying(){
 #pragma mark - thread 
 // 用于返回帧队列（FrameQueue）中可写的帧的指针
 static Frame *frame_queue_peek_writable(FrameQueue *f)
-{ // ，它会在帧队列中有空间可用之前一直等待，并阻塞当前线程，直到有新的帧可被写入队列
-    /* wait until we have space to put a new frame */
-    SDL_LockMutex(f->mutex);
+{ // ，它会在帧队列中有空间可用之前一直等待，并阻塞当前线程，直到有新的帧可被写入队列 
+    if(!f->mutex){
+        cout << "f->mutex  是空的～～～～～～～～～" <<endl;
+        return nullptr;
+    }
+//    SDL_LockMutex(f->mutex);
     while (f->size >= f->max_size &&!f->pktq->abort_request) {
         SDL_CondWait(f->cond, f->mutex);
     }
-    SDL_UnlockMutex(f->mutex);
+//    SDL_UnlockMutex(f->mutex);
 
     if (f->pktq->abort_request)
         return NULL;
@@ -133,7 +168,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
     return ret;
 }
 
-static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
+static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVStream *audioStream) {
     int ret = AVERROR(EAGAIN);
     for (;;) {
         AVPacket pkt;
@@ -168,6 +203,9 @@ static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
 //                                d->next_pts = frame->pts + frame->nb_samples;
 //                                d->next_pts_tb = tb;
 //                            }
+//                            double aTime = av_q2d(audioStream->time_base) *pkt.pts;
+//                            cout<< "aTime--------------- " << aTime << endl;
+////                            double _aTime = av_q2d(is->_audio_st->time_base) * pkt.pts;
 //                        }
 //                        break;
 //                    }
@@ -188,52 +226,52 @@ static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
 //            } while (ret != AVERROR(EAGAIN));
 //        }
         
-//        do { // 首先，它会检查packet队列中是否有待解码的数据包，如果队列中没有待解码的数据包，则会通过SDL_CondSignal函数发出一个信号，等待队列中有新的数据包加入
-//            if (d->queue->nb_packets == 0){
-//                SDL_CondSignal(d->empty_queue_cond);
-//            }
-//            if (d->packet_pending) {
-//                // 如果队列中有数据包，它会检查是否有未解码的packet数据包，如果有，则将其移动到pkt变量中，并将packet_pending标志位设置为0
-//                av_packet_move_ref(&pkt, &d->pkt);
-//                d->packet_pending = 0;
-//            } else { // 如果队列中没有未解码的packet数据包，则使用packet_queue_get函数从队列中获取一个packet数据包
-//                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0) {
-//                    return -1;
-//                }
-//            }
-//            if (d->queue->serial == d->pkt_serial)
-//                break;
-//            av_packet_unref(&pkt);
-//        } while (1);
-        
-        if (pkt.data == flush_pkt.data) {
-            avcodec_flush_buffers(d->avctx);
-            d->finished = 0;
-            d->next_pts = d->start_pts;
-            d->next_pts_tb = d->start_pts_tb;
-        }else {
-            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) { // 如果是字幕解码器
-                int got_frame = 0;
-                ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, &pkt); // 则调用avcodec_decode_subtitle2函数进行字幕解码，并根据返回值设置ret的值
-                if (ret < 0) {// 如果got_frame为1且pkt.data为NULL，则将packet_pending标志位设置为1，将pkt数据包的引用移动到d->pkt中，并将ret的值设置为0
-                    ret = AVERROR(EAGAIN); // 否则将ret的值设置为AVERROR(EAGAIN)或AVERROR_EOF
-                } else {
-                    if (got_frame && !pkt.data) { //
-                       d->packet_pending = 1;
-                       av_packet_move_ref(&d->pkt, &pkt);
-                    }
-                    ret = got_frame ? 0 : (pkt.data ? AVERROR(EAGAIN) : AVERROR_EOF);
-                }
-            } else {
-                if (avcodec_send_packet(d->avctx, &pkt) == AVERROR(EAGAIN)) {// 如果是音频或视频解码器，则调用avcodec_send_packet函数将pkt数据包送入解码器进行解码
-                    av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
-                    d->packet_pending = 1;// 并将pkt数据包的引用移动到d->pkt中，以便下一轮解码使用。如果返回值不为AVERROR(EAGAIN)，则根据解码结果设置ret的值。
-                    av_packet_move_ref(&d->pkt, &pkt);
-//                    最后，使用av_packet_unref函数释放pkt数据包，避免内存泄漏。
+        do { // 首先，它会检查packet队列中是否有待解码的数据包，如果队列中没有待解码的数据包，则会通过SDL_CondSignal函数发出一个信号，等待队列中有新的数据包加入
+            if (d->queue->nb_packets == 0){
+                SDL_CondSignal(d->empty_queue_cond);
+            }
+            if (d->packet_pending) {
+                // 如果队列中有数据包，它会检查是否有未解码的packet数据包，如果有，则将其移动到pkt变量中，并将packet_pending标志位设置为0
+                av_packet_move_ref(&pkt, &d->pkt);
+                d->packet_pending = 0;
+            } else { // 如果队列中没有未解码的packet数据包，则使用packet_queue_get函数从队列中获取一个packet数据包
+                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0) {
+                    return -1;
                 }
             }
+            if (d->queue->serial == d->pkt_serial)
+                break;
             av_packet_unref(&pkt);
-        }
+        } while (1);
+        
+//        if (pkt.data == flush_pkt.data) {
+//            avcodec_flush_buffers(d->avctx);
+//            d->finished = 0;
+//            d->next_pts = d->start_pts;
+//            d->next_pts_tb = d->start_pts_tb;
+//        }else {
+//            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) { // 如果是字幕解码器
+//                int got_frame = 0;
+//                ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, &pkt); // 则调用avcodec_decode_subtitle2函数进行字幕解码，并根据返回值设置ret的值
+//                if (ret < 0) {// 如果got_frame为1且pkt.data为NULL，则将packet_pending标志位设置为1，将pkt数据包的引用移动到d->pkt中，并将ret的值设置为0
+//                    ret = AVERROR(EAGAIN); // 否则将ret的值设置为AVERROR(EAGAIN)或AVERROR_EOF
+//                } else {
+//                    if (got_frame && !pkt.data) { //
+//                       d->packet_pending = 1;
+//                       av_packet_move_ref(&d->pkt, &pkt);
+//                    }
+//                    ret = got_frame ? 0 : (pkt.data ? AVERROR(EAGAIN) : AVERROR_EOF);
+//                }
+//            } else {
+//                if (avcodec_send_packet(d->avctx, &pkt) == AVERROR(EAGAIN)) {// 如果是音频或视频解码器，则调用avcodec_send_packet函数将pkt数据包送入解码器进行解码
+//                    av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+//                    d->packet_pending = 1;// 并将pkt数据包的引用移动到d->pkt中，以便下一轮解码使用。如果返回值不为AVERROR(EAGAIN)，则根据解码结果设置ret的值。
+//                    av_packet_move_ref(&d->pkt, &pkt);
+////                    最后，使用av_packet_unref函数释放pkt数据包，避免内存泄漏。
+//                }
+//            }
+//            av_packet_unref(&pkt);
+//        }
     }
 }
 
@@ -241,26 +279,28 @@ int audio_thread(void *arg)
 {
     cout<<"aaaaaaaa"<<endl;
     VideoState *is = (VideoState *)arg;
+    AVStream *stream = is->audio_st;
     AVFrame *frame = av_frame_alloc();
     Frame *af;
     int got_frame = 0;
     AVRational tb;
     int ret = 0;
     
-    do {
-//        got_frame = decoder_decode_frame(&is->auddec, frame, NULL); // 有bug～～～～～～
-        if (got_frame) {
-            tb = (AVRational){1, frame->sample_rate};
-            af = frame_queue_peek_writable(&is->sampq);
-            af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
-            af->pos = frame->pkt_pos;
-            af->serial = is->auddec.pkt_serial;
-            af->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
-            av_frame_move_ref(af->frame, frame);
-            frame_queue_push(&is->sampq);
-        }
-        
-    } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
+//    do {
+//        got_frame = decoder_decode_frame(&is->auddec, frame, stream); // 有bug～～～～～～
+//        if (got_frame) {
+//            tb = (AVRational){1, frame->sample_rate};
+//            af = frame_queue_peek_writable(&is->sampq);
+//            af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+//            af->pos = frame->pkt_pos;
+//            af->serial = is->auddec.pkt_serial;
+//            af->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
+//            av_frame_move_ref(af->frame, frame);
+//            cout << "af 是空的～～～～～～" << endl;
+//            frame_queue_push(&is->sampq);
+//        }
+//
+//    } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
     return ret;
 }
 
@@ -712,7 +752,7 @@ void VideoPlayer::readFile() {
     fflush(stderr);
     //初始化音频信息
     _hasAudio = initAudioInfo() >= 0; // 耗时
-    //初始化视频信息
+    //初始化视频信息av_find_best_stream
     _hasVideo = initVideoInfo() >= 0; // 耗时
     if(!_hasAudio && !_hasVideo)
     {
@@ -737,38 +777,39 @@ void VideoPlayer::readFile() {
 //        从输入文件中读取数据
     //确保每次读取到的pkt都是新的，在while循环外面，则每次加入list中的pkt都不会将一模一样，不为最后一次读取到的pkt，为全新的pkt，调用了拷贝构造函数
     AVPacket pkt;
+    int  index = 0;
     while(_state != Stopped){
         //处理seek操作
-        if(_seekTime >= 0){
-            int streamIdx;
-            if(_hasAudio){//优先使用音频流索引
-            cout << "seek优先使用，音频流索引" << _aStream->index << endl;
-              streamIdx = _aStream->index;
-            }else{
-            cout << "seek优先使用，视频流索引" << _vStream->index << endl;
-              streamIdx = _vStream->index;
-            }
-            //现实时间 -> 时间戳
-            AVRational time_base = _fmtCtx->streams[streamIdx]->time_base;
-            int64_t ts = _seekTime/av_q2d(time_base);
-            ret = av_seek_frame(_fmtCtx,streamIdx,ts,AVSEEK_FLAG_BACKWARD);
-            if(ret < 0){//seek失败
-                cout << "seek失败" << _seekTime << ts << streamIdx << endl;
-                _seekTime = -1;
-            }else{//seek成功
-                cout << "------------seek成功-----------seekTime:" << _seekTime << "--ffmpeg时间戳:" << ts << "--流索引:" << streamIdx << endl;
-                //记录seek到了哪一帧，有可能是P帧或B,会导致seek向前找到I帧，此时就会比实际seek的值要提前几帧，现象是调到seek的帧时会快速的闪现I帧到seek的帧
-                //清空之前读取的数据包
-                clearAudioPktList();
-                clearVideoPktList();
-                _vSeekTime = _seekTime;
-                _aSeekTime = _seekTime;
-                _seekTime = -1;
-                //恢复时钟
-                _aTime = 0;
-                _vTime = 0;
-            }
-        }
+//        if(_seekTime >= 0){
+//            int streamIdx;
+//            if(_hasAudio){//优先使用音频流索引
+//            cout << "seek优先使用，音频流索引" << _aStream->index << endl;
+//              streamIdx = _aStream->index;
+//            }else{
+//            cout << "seek优先使用，视频流索引" << _vStream->index << endl;
+//              streamIdx = _vStream->index;
+//            }
+//            //现实时间 -> 时间戳
+//            AVRational time_base = _fmtCtx->streams[streamIdx]->time_base;
+//            int64_t ts = _seekTime/av_q2d(time_base);
+//            ret = av_seek_frame(_fmtCtx,streamIdx,ts,AVSEEK_FLAG_BACKWARD);
+//            if(ret < 0){//seek失败
+//                cout << "seek失败" << _seekTime << ts << streamIdx << endl;
+//                _seekTime = -1;
+//            }else{//seek成功
+//                cout << "------------seek成功-----------seekTime:" << _seekTime << "--ffmpeg时间戳:" << ts << "--流索引:" << streamIdx << endl;
+//                //记录seek到了哪一帧，有可能是P帧或B,会导致seek向前找到I帧，此时就会比实际seek的值要提前几帧，现象是调到seek的帧时会快速的闪现I帧到seek的帧
+//                //清空之前读取的数据包
+//                clearAudioPktList();
+//                clearVideoPktList();
+//                _vSeekTime = _seekTime;
+//                _aSeekTime = _seekTime;
+//                _seekTime = -1;
+//                //恢复时钟
+//                _aTime = 0;
+//                _vTime = 0;
+//            }
+//        }
 
         int vSize = static_cast<int>(_vPktList.size());//_vPktList.size();
         int aSize = static_cast<int>(_aPktList.size());//_aPktList.size()
@@ -779,9 +820,11 @@ void VideoPlayer::readFile() {
         }
 //            cout << "视频包list大小:" << _vPktList.size() << "音频包list大小:" << _aPktList.size() << endl;
         ret = av_read_frame(_fmtCtx,&pkt);
+        index ++;
         if(ret == 0){
             if(pkt.stream_index == _aStream->index){//读取到的是音频数据
                 addAudioPkt(pkt); // 读取音频
+                cout<< "读取到音频了！！！！！！"<<index <<"aaaaaaaa"<< endl;
             }else if(pkt.stream_index == _vStream->index){//读取到的是视频数据
                 addVideoPkt(pkt); // 读取视频
             }else{

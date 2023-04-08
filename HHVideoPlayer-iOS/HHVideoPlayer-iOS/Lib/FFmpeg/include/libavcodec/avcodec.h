@@ -107,7 +107,7 @@
  *   functions and process their output:
  *   - For decoding, call avcodec_receive_frame(). On success, it will return
  *     an AVFrame containing uncompressed audio or video data.
- *   - For encoding, call avcodec_receive_packet(). On success, it will return
+ *   - For encoding, call avcodec_receive_packet().On success, it will return
  *     an AVPacket with a compressed frame.
  *
  *   Repeat this call until it returns AVERROR(EAGAIN) or an error. The

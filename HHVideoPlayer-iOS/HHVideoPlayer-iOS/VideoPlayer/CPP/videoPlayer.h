@@ -16,19 +16,6 @@
 using namespace std;
 #include "PlayerCInterface.h"
 
-extern "C" {
-//格式
-#include <libavformat/avformat.h>
-//工具
-#include <libavutil/avutil.h>
-//编码
-#include <libavcodec/avcodec.h>
-#include <libavutil/imgutils.h>
-//重采样
-#include <libswresample/swresample.h>
-//像素格式转换
-#include <libswscale/swscale.h>
-}
 
 #define ERROR_BUF \
     char errbuf[1024];\
