@@ -56,5 +56,19 @@ private:
     int packet_queue_init(PacketQueue *q);
     
     int packet_queue_put_nullpacket(PacketQueue *q, int stream_index);
+    
+    int stream_component_open(VideoState *tis, int stream_index);
+    
+    void packet_queue_start(PacketQueue *q);
+    
+    int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg);
+    void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond);
+    
+    int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params);
+    int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub);
+    int audio_thread(void *arg);
+    
+    void initSwr();
+    
 };
 #endif /* HHVideoPlayer_hpp */

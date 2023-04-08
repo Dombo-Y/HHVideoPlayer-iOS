@@ -85,6 +85,15 @@ typedef struct FrameQueue {
     PacketQueue *pktq; // 待解码数据队列
 }FrameQueue;
 
+typedef struct {
+    int sampleRate;
+    AVSampleFormat sampleFmt;
+    int chLayout;
+    int chs;
+    //每一个样本帧(两个声道(左右声道))的大小
+    int bytesPerSampleFrame;
+} AudioSwrSpec;
+
 typedef struct Clock {
     double pts;           /* clock base */// 当前时钟基准时间。
     double pts_drift;     /* clock base minus time at which we updated the clock */// 时钟基准时间减去最后一次更新时的时间
@@ -119,7 +128,7 @@ typedef struct Decoder {
     AVRational next_pts_tb; //  下一帧数据的时间戳对应的时间基
     SDL_Thread *decoder_tid; // 解码线程的ID
 } Decoder;
-
+ 
 
 typedef struct VideoState {
     SDL_Thread *read_tid;//
@@ -191,9 +200,10 @@ typedef struct VideoState {
     
     HHVideoState state = Stopped;
     int seekTime = -1;
-     
-//    std::list<AVPacket> _aPktList;  //存放音频包的列表  ---- 跟随VideoPlayer生而生死而死，用对象不用指针
-//    std::list<AVPacket> _vPktList;  //存放视频包的列表 ---- 跟随VideoPlayer生而生死而死，用对象不用指针
+       
+    SwrContext *_aSwrCtx = nullptr;    //音频重采样上下文
+    AudioSwrSpec _aSwrInSpec,_aSwrOutSpec;   //音频重采样输入/输出参数
+    AVFrame *_aSwrInFrame = nullptr,*_aSwrOutFrame = nullptr;   //存放解码后的音频重采样输入/输出数据
 
 }VideoState;
 

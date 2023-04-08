@@ -864,10 +864,10 @@
 			children = (
 				D1AD0EEA29E1A62C00F8AB68 /* Example */,
 				D1AD0EF429E1A62C00F8AB68 /* videoState.hpp */,
-				D1AD0EF529E1A62C00F8AB68 /* HHVideoPlayer.cpp */,
+				D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */,
 				D1AD0EF629E1A62C00F8AB68 /* videoPlayerDecoder.cpp */,
 				D1AD0EF729E1A62C00F8AB68 /* HHVideoPlayer.h */,
-				D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */,
+				D1AD0EF529E1A62C00F8AB68 /* HHVideoPlayer.cpp */,
 			);
 			path = CPP;
 			sourceTree = "<group>";
