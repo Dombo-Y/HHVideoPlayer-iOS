@@ -55,6 +55,6 @@ private:
     
     int packet_queue_init(PacketQueue *q);
     
-     
+    int packet_queue_put_nullpacket(PacketQueue *q, int stream_index);
 };
 #endif /* HHVideoPlayer_hpp */

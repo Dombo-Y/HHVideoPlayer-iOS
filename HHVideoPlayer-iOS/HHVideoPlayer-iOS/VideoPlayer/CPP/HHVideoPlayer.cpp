@@ -85,6 +85,7 @@ void HHVideoPlayer::play() {
 }
 
 void HHVideoPlayer::readFile() {
+    SDL_mutex *wait_mutex = SDL_CreateMutex();
     AVFormatContext *fmtCtx = is->ic;
     int ret = 0;
     ret = avformat_open_input(&fmtCtx, _filename, nullptr, nullptr);
@@ -125,14 +126,13 @@ void HHVideoPlayer::readFile() {
     
     AVFrame *inFrame = av_frame_alloc();
     AVFrame *outFrame = av_frame_alloc();
-    AVPacket aPacket;
-    AVPacket vPacket;
+    AVPacket aPacket; 
     int index = 0;
     while (is->state != Stopped) {
         int vSize = is->videoq.size;
         int aSize = is->audioq.size;
 //        if (vSize + aSize  > 10000) {
-////            SDL_Delay(10);
+//            SDL_Delay(10);
 //            cout<< " 缓存满了～～～～ " << endl ;
 //            continue;; // 缓存足够大了就缓存
 //        }
@@ -140,29 +140,40 @@ void HHVideoPlayer::readFile() {
         av_format_inject_global_side_data(is->ic);
         ret = av_read_frame(is->ic, &aPacket);
         index ++;
+        
+        if (ret < 0) {
+            if ((ret == AVERROR_EOF || avio_feof(is->ic->pb)) && !is->eof) {
+                if (is->video_stream >= 0) {
+                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+                }
+                if (is->audio_stream >= 0) {
+                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
+                }
+                is->eof = 1;
+                cout << "读取到文件末尾了～～" << endl ;
+                SDL_LockMutex(wait_mutex);
+                SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+                SDL_UnlockMutex(wait_mutex);
+                continue;
+            }
+        } else {
+            is->eof = 0;
+        }
+         
         if (ret == 0) {
             if (aPacket.stream_index == is->audio_stream) {
-                addAudioPkt(&aPacket);
-                cout << &aPacket << "音频音频音频音频音频" << index  << endl;
+//                addAudioPkt(&aPacket);
+//                cout << &aPacket << "音频音频音频音频音频" << index  << endl;
             }else if (aPacket.stream_index == is->video_stream) {
-//                addVideoPkt(aPacket);
-                cout << &aPacket << "视频视频视频视频" << endl;
+                addVideoPkt(&aPacket);
+                cout << &aPacket << "视频视频视频视频" << index  << endl;
             }else {
 //                av_packet_unref(aPacket);
             }
-        }else if (ret == AVERROR_EOF) {
-            if (vSize == 0 && aSize == 0) {
-                 //释放 ctx？
-            }
-        } else {
-            cout << "aaaaaa" << endl ;
-            continue;
         }
     }
-//    if() {
-//        读取到文件尾部了
-//        stop()
-//    }
+    
+    SDL_DestroyMutex(wait_mutex);
 }
 
 void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
@@ -191,7 +202,9 @@ void HHVideoPlayer::addAudioPkt(AVPacket *pkt) {
 }
 
 void HHVideoPlayer::addVideoPkt(AVPacket *pkt) {
-    
+    SDL_LockMutex(is->videoq.mutex);
+    packet_queue_put_private(&is->videoq, pkt);
+    SDL_UnlockMutex(is->videoq.mutex);
 }
 
 void HHVideoPlayer::setFilename(const char *filename){
@@ -224,6 +237,16 @@ int HHVideoPlayer::packet_queue_init(PacketQueue *q) {
     return 0;
 }
 
+int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index) {
+    AVPacket pkt1, *pkt = &pkt1;
+    av_init_packet(pkt);
+    pkt->data = NULL;
+    pkt->size = 0;
+    pkt->stream_index = stream_index;
+    packet_queue_put_private(q, pkt);
+    return 1;
+}
+
  
 int HHVideoPlayer::initDecoder(AVCodecContext **decodeCtx, AVStream **stream, AVMediaType type) {
     int ret = av_find_best_stream(is->ic, type, -1, -1, nullptr, 0);
@@ -250,11 +273,12 @@ int HHVideoPlayer::initAudioSwr() {
     
     ret = swr_init(aSwrCtx);
     av_frame_alloc();
-    
     AVFrame *outFrame = av_frame_alloc(); //输出frame
 //    av_samples_alloc(outFrame->data, outFrame->linesize, out_chs, 4096, out_samplefmt, 1);
     return 0;
 }
+
+
 
 int HHVideoPlayer::initVideoSwr() {
     
