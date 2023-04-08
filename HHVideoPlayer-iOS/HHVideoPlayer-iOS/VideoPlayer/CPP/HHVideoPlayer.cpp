@@ -74,6 +74,12 @@ HHVideoPlayer::~HHVideoPlayer() {
     printf("析构函数～～～～");
 }
 
+void HHVideoPlayer::setSelf(void *aSelf)
+{
+    self = aSelf;
+}
+
+#pragma mark - Init Method
 void HHVideoPlayer::initSwr() {
     is->_aSwrOutSpec.sampleRate = is->audioCodecCtx->sample_rate;
     is->_aSwrInSpec.sampleFmt = is->audioCodecCtx->sample_fmt;
@@ -85,6 +91,81 @@ void HHVideoPlayer::initSwr() {
     
 }
 
+bool HHVideoPlayer::initAudioInfo() {
+//    int ret = initDecoder(<#AVCodecContext **decodeCtx#>, <#AVStream **stream#>, <#AVMediaType type#>)
+    
+    return true;
+}
+
+bool HHVideoPlayer::initVideoInfo() {
+    
+    return true;
+}
+
+
+int HHVideoPlayer::initDecoder(AVCodecContext **decodeCtx, AVStream **stream, AVMediaType type) {
+   int ret = av_find_best_stream(is->ic, type, -1, -1, nullptr, 0);
+   return 0;
+}
+
+int HHVideoPlayer::initAudioSwr() {
+   int ret = 0;
+   // 输入采样率
+   int in_sample_rate = is->audioCodecCtx->sample_rate;
+   AVSampleFormat in_sp_fmt = is->audioCodecCtx->sample_fmt;
+   int in_channel_layout = is->audioCodecCtx->channel_layout;
+   int in_channels = is->audioCodecCtx->channels;
+   
+   // 输出采样率
+   int outSampleRate = SAMPLE_RATE;
+   int out_samplefmt= AV_SAMPLE_FMT_S16;
+   int out_chLayout = AV_CH_LAYOUT_STEREO;
+   int out_chs = av_get_channel_layout_nb_channels(is->audioCodecCtx->channel_layout);
+   int out_bytesPerSampleFrame = out_chs * av_get_bytes_per_sample(is->audioCodecCtx->sample_fmt);
+   
+   SwrContext *aSwrCtx = nullptr;    //音频重采样
+//    aSwrCtx = swr_alloc_set_opts(nullptr, out_chLayout, out_samplefmt, outSampleRate, in_channel_layout, in_sp_fmt, in_sample_rate, 0, nullptr);
+//    swr_alloc_set_opts(aSwrCtx, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+   ret = swr_init(aSwrCtx);
+   
+   is->_aSwrInFrame = av_frame_alloc();
+   is->_aSwrOutFrame = av_frame_alloc();
+   ret = av_samples_alloc(is->_aSwrOutFrame->data, is->_aSwrOutFrame->linesize, is->_aSwrOutSpec.chs, 4096, is->_aSwrOutSpec.sampleFmt, 1);
+//    swr_alloc_set_opts(<#struct SwrContext *s#>, <#int64_t out_ch_layout#>, <#enum AVSampleFormat out_sample_fmt#>, <#int out_sample_rate#>, <#int64_t in_ch_layout#>, <#enum AVSampleFormat in_sample_fmt#>, <#int in_sample_rate#>, <#int log_offset#>, <#void *log_ctx#>)
+   //    av_samples_alloc(outFrame->data, outFrame->linesize, out_chs, 4096, out_samplefmt, 1);
+   return 0;
+}
+
+
+int HHVideoPlayer::initVideoSwr() {
+   
+   return 0;
+}
+
+void HHVideoPlayer::decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) {
+    memset(d, 0, sizeof(Decoder));
+    d->avctx = avctx;
+    d->queue = queue;
+    d->empty_queue_cond = empty_queue_cond;
+    d->start_pts = AV_NOPTS_VALUE;
+    d->pkt_serial = -1;
+}
+
+int HHVideoPlayer::packet_queue_init(PacketQueue *q) {
+    memset(q, 0, sizeof(PacketQueue));
+    q->mutex = SDL_CreateMutex();
+    if (!q->mutex) {
+        return AVERROR(ENOMEM);
+    }
+    q->cond = SDL_CreateCond();
+    if (!q->cond) {
+        return AVERROR(ENOMEM);
+    }
+    q->abort_request = 1;
+    return 0;
+}
+
+#pragma mark -
 void HHVideoPlayer::play() {
 //    if (is->state == Playing) return;;
     
@@ -193,76 +274,12 @@ void HHVideoPlayer::readFile() {
     SDL_DestroyMutex(wait_mutex);
 }
 
-void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
-    MyAVPacketList *pkt1;
-    pkt1 = (MyAVPacketList *)av_malloc(sizeof(MyAVPacketList));
-    pkt1->pkt = *pkt;
-    pkt1 -> next = NULL;
-    pkt1->serial = is->audioq.serial;
-    if (!q->last_pkt) {
-        q->first_pkt = pkt1;
-    }else {
-        q->last_pkt->next = pkt1;
-    }
-    q->last_pkt = pkt1;
-    q->nb_packets++;
-    q->size += pkt1->pkt.size + sizeof(*pkt1);
-    q->duration += pkt1->pkt.duration;
-    cout<< "音频帧大小～～" << pkt1->pkt.size <<endl;
-}
-
-
-void HHVideoPlayer::addAudioPkt(AVPacket *pkt) {
-    SDL_LockMutex(is->audioq.mutex);
-    packet_queue_put_private(&is->audioq, pkt);
-    SDL_UnlockMutex(is->audioq.mutex);
-}
-
-void HHVideoPlayer::addVideoPkt(AVPacket *pkt) {
-    SDL_LockMutex(is->videoq.mutex);
-    packet_queue_put_private(&is->videoq, pkt);
-    SDL_UnlockMutex(is->videoq.mutex);
-}
-
 void HHVideoPlayer::setFilename(const char *filename){
     memcpy(_filename,filename,strlen(filename) + 1);
     cout << _filename << endl;
 }
 
-bool HHVideoPlayer::initAudioInfo() {
-//    int ret = initDecoder(<#AVCodecContext **decodeCtx#>, <#AVStream **stream#>, <#AVMediaType type#>)
-    
-    return true;
-}
 
-bool HHVideoPlayer::initVideoInfo() {
-    
-    return true;
-}
-
-int HHVideoPlayer::packet_queue_init(PacketQueue *q) {
-    memset(q, 0, sizeof(PacketQueue));
-    q->mutex = SDL_CreateMutex();
-    if (!q->mutex) {
-        return AVERROR(ENOMEM);
-    }
-    q->cond = SDL_CreateCond();
-    if (!q->cond) {
-        return AVERROR(ENOMEM);
-    }
-    q->abort_request = 1;
-    return 0;
-}
-
-int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index) {
-    AVPacket pkt1, *pkt = &pkt1;
-    av_init_packet(pkt);
-    pkt->data = NULL;
-    pkt->size = 0;
-    pkt->stream_index = stream_index;
-    packet_queue_put_private(q, pkt);
-    return 1;
-}
 
 int HHVideoPlayer::audio_thread(void *arg)
 {
@@ -284,6 +301,19 @@ int HHVideoPlayer::audio_thread(void *arg)
     }while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
     
     return 0;
+}
+
+#pragma mark - open Method
+int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params) {
+    
+    int wanted_spec, spec;
+    const char *env;
+    static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
+    static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
+    int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
+    
+    
+    return 1;
 }
 
 int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
@@ -369,66 +399,47 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
     return ret;
 }
 
- 
-int HHVideoPlayer::initDecoder(AVCodecContext **decodeCtx, AVStream **stream, AVMediaType type) {
-    int ret = av_find_best_stream(is->ic, type, -1, -1, nullptr, 0);
-    return 0;
+
+#pragma mark  - Addddddddddddd
+void HHVideoPlayer::addAudioPkt(AVPacket *pkt) {
+    SDL_LockMutex(is->audioq.mutex);
+    packet_queue_put_private(&is->audioq, pkt);
+    SDL_UnlockMutex(is->audioq.mutex);
 }
 
-int HHVideoPlayer::initAudioSwr() {
-    int ret = 0;
-    // 输入采样率
-    int in_sample_rate = is->audioCodecCtx->sample_rate;
-    AVSampleFormat in_sp_fmt = is->audioCodecCtx->sample_fmt;
-    int in_channel_layout = is->audioCodecCtx->channel_layout;
-    int in_channels = is->audioCodecCtx->channels;
-    
-    // 输出采样率
-    int outSampleRate = SAMPLE_RATE;
-    int out_samplefmt= AV_SAMPLE_FMT_S16;
-    int out_chLayout = AV_CH_LAYOUT_STEREO;
-    int out_chs = av_get_channel_layout_nb_channels(is->audioCodecCtx->channel_layout);
-    int out_bytesPerSampleFrame = out_chs * av_get_bytes_per_sample(is->audioCodecCtx->sample_fmt);
-    
-    SwrContext *aSwrCtx = nullptr;    //音频重采样
-//    aSwrCtx = swr_alloc_set_opts(nullptr, out_chLayout, out_samplefmt, outSampleRate, in_channel_layout, in_sp_fmt, in_sample_rate, 0, nullptr);
-//    swr_alloc_set_opts(aSwrCtx, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-    ret = swr_init(aSwrCtx);
-    
-    is->_aSwrInFrame = av_frame_alloc();
-    is->_aSwrOutFrame = av_frame_alloc();
-    ret = av_samples_alloc(is->_aSwrOutFrame->data, is->_aSwrOutFrame->linesize, is->_aSwrOutSpec.chs, 4096, is->_aSwrOutSpec.sampleFmt, 1);
-//    swr_alloc_set_opts(<#struct SwrContext *s#>, <#int64_t out_ch_layout#>, <#enum AVSampleFormat out_sample_fmt#>, <#int out_sample_rate#>, <#int64_t in_ch_layout#>, <#enum AVSampleFormat in_sample_fmt#>, <#int in_sample_rate#>, <#int log_offset#>, <#void *log_ctx#>)
-    //    av_samples_alloc(outFrame->data, outFrame->linesize, out_chs, 4096, out_samplefmt, 1);
-    return 0;
-}
- 
-
-int HHVideoPlayer::initVideoSwr() {
-    
-    return 0;
-} 
-
-void HHVideoPlayer::setSelf(void *aSelf)
-{
-    self = aSelf;
+void HHVideoPlayer::addVideoPkt(AVPacket *pkt) {
+    SDL_LockMutex(is->videoq.mutex);
+    packet_queue_put_private(&is->videoq, pkt);
+    SDL_UnlockMutex(is->videoq.mutex);
 }
 
+#pragma mark - Queue ------
+void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
+    MyAVPacketList *pkt1;
+    pkt1 = (MyAVPacketList *)av_malloc(sizeof(MyAVPacketList));
+    pkt1->pkt = *pkt;
+    pkt1 -> next = NULL;
+    pkt1->serial = is->audioq.serial;
+    if (!q->last_pkt) {
+        q->first_pkt = pkt1;
+    }else {
+        q->last_pkt->next = pkt1;
+    }
+    q->last_pkt = pkt1;
+    q->nb_packets++;
+    q->size += pkt1->pkt.size + sizeof(*pkt1);
+    q->duration += pkt1->pkt.duration;
+    cout<< "音频帧大小～～" << pkt1->pkt.size <<endl;
+}
 
-int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params) {
-    
-    int wanted_spec, spec;
-    const char *env;
-    static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
-    static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
-    int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
-    
-    
+int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index) {
+    AVPacket pkt1, *pkt = &pkt1;
+    av_init_packet(pkt);
+    pkt->data = NULL;
+    pkt->size = 0;
+    pkt->stream_index = stream_index;
+    packet_queue_put_private(q, pkt);
     return 1;
-}
-
-void HHVideoPlayer::decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) {
-    
 }
 
 void HHVideoPlayer::packet_queue_start(PacketQueue *q)
@@ -438,6 +449,9 @@ void HHVideoPlayer::packet_queue_start(PacketQueue *q)
     packet_queue_put_private(q, &flush_pkt); // 在队列中加入一个名为flush_pkt的数据包，作为队列的起始标志，可以清空队列中的所有数据
     SDL_UnlockMutex(q->mutex); // 解锁互斥锁，释放线程安全控制。
 }
+
+
+#pragma mark - decoder ~~~~
 
 int HHVideoPlayer::decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void *arg) {
     packet_queue_start(d->queue);
