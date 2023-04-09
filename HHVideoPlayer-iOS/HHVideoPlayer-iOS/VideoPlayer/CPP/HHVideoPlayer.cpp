@@ -107,17 +107,17 @@ bool HHVideoPlayer::initVideoInfo() {
 
 int HHVideoPlayer::initAudioSwr() {
    int ret = 0;
-   int in_sample_rate = is->audioCodecCtx->sample_rate;   // 输入采样率
-   AVSampleFormat in_sp_fmt = is->audioCodecCtx->sample_fmt;
-   int in_channel_layout = is->audioCodecCtx->channel_layout;
-   int in_channels = is->audioCodecCtx->channels;
-   
-
-   int outSampleRate = SAMPLE_RATE;    // 输出采样率
-   int out_samplefmt= AV_SAMPLE_FMT_S16;
-   int out_chLayout = AV_CH_LAYOUT_STEREO;
-   int out_chs = av_get_channel_layout_nb_channels(is->audioCodecCtx->channel_layout);
-   int out_bytesPerSampleFrame = out_chs * av_get_bytes_per_sample(is->audioCodecCtx->sample_fmt);
+//   int in_sample_rate = is->audioCodecCtx->sample_rate;   // 输入采样率
+//   AVSampleFormat in_sp_fmt = is->audioCodecCtx->sample_fmt;
+//   int in_channel_layout = is->audioCodecCtx->channel_layout;
+//   int in_channels = is->audioCodecCtx->channels;
+//
+//
+//   int outSampleRate = SAMPLE_RATE;    // 输出采样率
+//   int out_samplefmt= AV_SAMPLE_FMT_S16;
+//   int out_chLayout = AV_CH_LAYOUT_STEREO;
+//   int out_chs = av_get_channel_layout_nb_channels(is->audioCodecCtx->channel_layout);
+//   int out_bytesPerSampleFrame = out_chs * av_get_bytes_per_sample(is->audioCodecCtx->sample_fmt);
    
 //   SwrContext *aSwrCtx = nullptr;    //音频重采样 
 //    swr_alloc_set_opts(aSwrCtx, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
@@ -367,12 +367,12 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
 
 
 int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
-    int ret = AVERROR(EAGAIN);
-    int send_ret = 0;
-    int receive_ret = 0;
-    int sendIndex = 0;
-    int receiveIndex = 0;
-    int  total = 0;
+//    int ret = AVERROR(EAGAIN);
+//    int send_ret = 0;
+//    int receive_ret = 0;
+//    int sendIndex = 0;
+//    int receiveIndex = 0;
+//    int  total = 0;
 //    for (; ; ) {
 //        AVPacket pkt;
 //        do {
@@ -452,15 +452,15 @@ static Frame *frame_queue_peek_writable(FrameQueue *f) { // ，它会在帧队�
 }
 
 int audio_decoder_thread(void *avg) {
-    VideoState *vs = (VideoState *)avg;
-   
-    AVFrame *frame = av_frame_alloc(); // 用于存储解码信息，通常用于音视频解码器的解码操作
-    Frame *af; // 用来存储解码后的音频帧
-    int last_serial = -1; //表示上一个解码数据包的序列号
-    int reconfigure; // 表示是否需要对视频解码器进行重新配置
-    int got_frame = 0; // 表示当前解码操作是否成功。如果解码操作成功，got_frame 会被置为1，否则为0。
-    AVRational tb; // 视频解码时，视频帧的时间戳需要以该时间单位表示
-    int ret = 0;
+//    VideoState *vs = (VideoState *)avg;
+//
+//    AVFrame *frame = av_frame_alloc(); // 用于存储解码信息，通常用于音视频解码器的解码操作
+//    Frame *af; // 用来存储解码后的音频帧
+//    int last_serial = -1; //表示上一个解码数据包的序列号
+//    int reconfigure; // 表示是否需要对视频解码器进行重新配置
+//    int got_frame = 0; // 表示当前解码操作是否成功。如果解码操作成功，got_frame 会被置为1，否则为0。
+//    AVRational tb; // 视频解码时，视频帧的时间戳需要以该时间单位表示
+//    int ret = 0;
      
     cout<< "解码～～～～～解码～～～～解码～～～～" << endl;
 //
@@ -521,15 +521,14 @@ int HHVideoPlayer::stream_component_openA(VideoState *tis, int stream_index) {
         if (ret == 0) {
             cout<< "解码成功～～～～" << first_pkt<< "🃏🃏🃏" << frame->pkt_size << "~~~～"<< receiveIndex << endl;
             is->audioq.first_pkt = next;
-            bytesPerSampleFrame = is
+//            bytesPerSampleFrame = is
         }else {
             cout<< "解码失败～～～～～" << ret << "🃏🃏🃏" << ret << "~~~～" << receiveIndex << endl;
             is->audioq.first_pkt = next;
         }
 //        av_packet_unref(&pkt);
     } while (ret != AVERROR_EOF);
-    
-    SDL_MixAudio(<#Uint8 *dst#>, <#const Uint8 *src#>, <#Uint32 len#>, <#int volume#>)
+     
 //    pkt = is->audioq.first_pkt->pkt;
 //    MyAVPacketList *first_pkt = is->audioq.first_pkt;
 //    ret = avcodec_send_packet(is->audioCodecCtx, &pkt);
