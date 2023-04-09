@@ -1217,6 +1217,17 @@
 					"$(PROJECT_DIR)/HHVideoPlayer-iOS/Lib/SDL2/lib",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					"\"Foundation\"",
+					"-framework",
+					"\"Masonry\"",
+					"-framework",
+					"\"UIKit\"",
+					"-framework",
+					"\"WebRTC\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "Dombo.HHVideoPlayer-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1263,6 +1274,17 @@
 					"$(PROJECT_DIR)/HHVideoPlayer-iOS/Lib/SDL2/lib",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					"\"Foundation\"",
+					"-framework",
+					"\"Masonry\"",
+					"-framework",
+					"\"UIKit\"",
+					"-framework",
+					"\"WebRTC\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "Dombo.HHVideoPlayer-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

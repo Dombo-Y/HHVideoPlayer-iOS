@@ -581,8 +581,7 @@ static int read_thread(void *arg)
     int64_t stream_start_time = 0;
     int pkt_in_play_range = 0;
 //    AVDictionaryEntry *t;
-    SDL_mutex *wait_mutex = SDL_CreateMutex();
-//    int scan_all_pmts_set = 0;
+    SDL_mutex *wait_mutex = SDL_CreateMutex(); 
     int64_t pkt_ts = 0;
      
     if (!wait_mutex) {
@@ -648,9 +647,8 @@ static int read_thread(void *arg)
                 av_read_play(ic);
             }
         }
-            if (is->seek_req) { // seek
-                
-            }
+        if (is->seek_req) { // seek
+        }
 //            if(is->queue_attachments_req) { //将输入流中的附加图片放到 视频流队列中
 //
 //            }

@@ -411,17 +411,33 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "1707B34C-CC17-474B-A3E3-0BE789C5E07E"
+            uuid = "F842AC96-B609-4585-9863-AFC07A963BC0"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "322"
-            endingLineNumber = "322"
-            landmarkName = "packet_queue_get(q, pkt, block, serial)"
-            landmarkType = "9">
+            startingLineNumber = "273"
+            endingLineNumber = "273"
+            landmarkName = "HHVideoPlayer::readFile()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "45859834-C836-4CFC-8263-FBFC9E80A199"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "533"
+            endingLineNumber = "533"
+            landmarkName = "HHVideoPlayer::stream_component_openA(tis, stream_index)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

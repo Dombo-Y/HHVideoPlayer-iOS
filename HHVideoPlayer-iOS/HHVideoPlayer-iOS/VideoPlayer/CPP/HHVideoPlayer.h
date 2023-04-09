@@ -7,8 +7,8 @@
 
 #ifndef HHVideoPlayer_h
 #define HHVideoPlayer_h
-#include <stdio.h>
- 
+#include <stdio.h> 
+#include <libswresample/swresample.h>
 #include "videoState.hpp"
 
 class HHVideoPlayer {
@@ -35,7 +35,8 @@ public:
     void *self; 
     
 private:
-    VideoState *is; 
+    VideoState *is;
+    SwrContext *aSwrCtx = nullptr;
     char _filename[512];    /* 文件名 */
     void playerfree();
     void freeAudio();
@@ -44,8 +45,7 @@ private:
     void initVideoState();
     void setState(int state);    //改变状态
     bool initAudioInfo();
-    bool initVideoInfo();
-    int initDecoder(AVCodecContext **decodeCtx,AVStream **stream,AVMediaType type);
+    bool initVideoInfo(); 
     int initAudioSwr();
     int initVideoSwr();
     
@@ -74,6 +74,7 @@ private:
     
 //    void event_loop(VideoState *cur_stream);
     void init_clock(Clock *c, int *queue_serial);
+    int stream_component_openA(VideoState *tis, int stream_index);
      
 };
 #endif /* HHVideoPlayer_hpp */
