@@ -53,8 +53,6 @@
 		D1AD0F0129E1A62C00F8AB68 /* videoPlayerDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF629E1A62C00F8AB68 /* videoPlayerDecoder.cpp */; };
 		D1AD0F0229E1A62C00F8AB68 /* videoState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */; };
 		D1AD0F0329E1A62C00F8AB68 /* HHVideoPlayerViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1AD0EFA29E1A62C00F8AB68 /* HHVideoPlayerViewController.mm */; };
-		D1F30FD629E3096A00EDADC7 /* HHVIdeoPlayerAudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1F30FD429E3096A00EDADC7 /* HHVIdeoPlayerAudio.cpp */; };
-		D1F30FD929E3098900EDADC7 /* HHVideoPlayerVideo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1F30FD729E3098900EDADC7 /* HHVideoPlayerVideo.cpp */; };
 		FC7007B0B55CDA711D7DB8D2 /* Pods_HHVideoPlayer_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C355B2828AD2B34D5202093 /* Pods_HHVideoPlayer_iOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -343,8 +341,6 @@
 		D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoState.cpp; sourceTree = "<group>"; };
 		D1AD0EF929E1A62C00F8AB68 /* HHVideoPlayerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HHVideoPlayerViewController.h; sourceTree = "<group>"; };
 		D1AD0EFA29E1A62C00F8AB68 /* HHVideoPlayerViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HHVideoPlayerViewController.mm; sourceTree = "<group>"; };
-		D1F30FD429E3096A00EDADC7 /* HHVIdeoPlayerAudio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HHVIdeoPlayerAudio.cpp; sourceTree = "<group>"; };
-		D1F30FD729E3098900EDADC7 /* HHVideoPlayerVideo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HHVideoPlayerVideo.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -871,8 +867,6 @@
 				D1AD0EF829E1A62C00F8AB68 /* videoState.cpp */,
 				D1AD0EF629E1A62C00F8AB68 /* videoPlayerDecoder.cpp */,
 				D1AD0EF729E1A62C00F8AB68 /* HHVideoPlayer.h */,
-				D1F30FD429E3096A00EDADC7 /* HHVIdeoPlayerAudio.cpp */,
-				D1F30FD729E3098900EDADC7 /* HHVideoPlayerVideo.cpp */,
 				D1AD0EF529E1A62C00F8AB68 /* HHVideoPlayer.cpp */,
 			);
 			path = CPP;
@@ -1046,8 +1040,6 @@
 				D1AD0F0229E1A62C00F8AB68 /* videoState.cpp in Sources */,
 				D1AD0EFD29E1A62C00F8AB68 /* cmdutils.c in Sources */,
 				D176310429DDAE0E00D25BA7 /* main.m in Sources */,
-				D1F30FD629E3096A00EDADC7 /* HHVIdeoPlayerAudio.cpp in Sources */,
-				D1F30FD929E3098900EDADC7 /* HHVideoPlayerVideo.cpp in Sources */,
 				D17630F629DDAE0B00D25BA7 /* SceneDelegate.m in Sources */,
 				D176323A29DDB0D400D25BA7 /* OpenGLView20.m in Sources */,
 			);
