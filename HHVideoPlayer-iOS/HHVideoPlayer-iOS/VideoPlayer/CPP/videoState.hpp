@@ -63,6 +63,7 @@ typedef struct Frame {
 
 typedef struct PacketQueue {
     MyAVPacketList *first_pkt, *last_pkt;// 链表中第一个pkt和最后一个pkt
+//    AVFifo *pkt_list;
     int nb_packets; // 队列中数据包的数量
     int size; // 队列中所有数据包的大小
     int64_t duration;// 队列中的数据包总时长
@@ -129,6 +130,9 @@ typedef struct Decoder {
     SDL_Thread *decoder_tid; // 解码线程的ID
 } Decoder;
  
+typedef struct FrameData {
+    int64_t pkt_pos;
+} FrameData;
 
 typedef struct VideoState {
     SDL_Thread *read_tid;//

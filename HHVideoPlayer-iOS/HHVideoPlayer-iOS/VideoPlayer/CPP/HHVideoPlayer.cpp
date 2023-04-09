@@ -28,27 +28,23 @@ void HHVideoPlayer::initVideoState() {
     iv->filename = _filename;
     iv->ic = avformat_alloc_context();
     
-//    初始化解码后的帧队列 FrameQueue
-    ret = frame_queue_init(&iv->pictq, &iv->videoq, VIDEO_PICTURE_QUEUE_SIZE, 1);
+    ret = frame_queue_init(&iv->pictq, &iv->videoq, VIDEO_PICTURE_QUEUE_SIZE, 1);// 初始化解码后的帧队列 FrameQueue
     ret = frame_queue_init(&iv->sampq, &iv->audioq, SAMPLE_QUEUE_SIZE, 1);
       
-//    初始化解码前的帧队列 PacketQueue
-    ret = packet_queue_init(&iv->videoq);
+    ret = packet_queue_init(&iv->videoq);// 初始化解码前的帧队列 PacketQueue
     ret = packet_queue_init(&iv->audioq);
    
-//    初始化 Decoder
-    if(!(iv->continue_read_thread = SDL_CreateCond())) {
+ 
+    if(!(iv->continue_read_thread = SDL_CreateCond())) { // Create  read_thread
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
     }
-    
-    //初始化时钟
-//    init_clock(&iv->vidclk, &iv->videoq.serial);
-//    init_clock(&iv->audclk, &iv->audioq.serial);
-//    init_clock(&iv->extclk, &iv->extclk.serial);
+     
+    init_clock(&iv->vidclk, &iv->videoq.serial);    //初始化时钟
+    init_clock(&iv->audclk, &iv->audioq.serial);
+    init_clock(&iv->extclk, &iv->extclk.serial);
     iv->audio_clock_serial = -1;
     
     iv->av_sync_type = av_sync_type;// 音频时钟同步
-//    iv->read_tid = SDL_CreateThread(read_thread, "read_thread", iv);
    
     if (!iv->read_tid) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateThread(): %s\n", SDL_GetError());
@@ -56,14 +52,13 @@ void HHVideoPlayer::initVideoState() {
     is = iv;
 }
  
-void HHVideoPlayer::setState(int state){
+void HHVideoPlayer::setState(int state) {
     if(state == is->state) return;
 //    is->state = static_cast<VideoState::state>(state);
 //    stateChanged(self);    //通知播放器进行UI改变
 }
 
 HHVideoPlayer::HHVideoPlayer() {
-//    cout<< "初始化～～～" <<endl ;
     printf("初始化～～～");
     initVideoState();
     
@@ -75,8 +70,7 @@ HHVideoPlayer::~HHVideoPlayer() {
     printf("析构函数～～～～");
 }
 
-void HHVideoPlayer::setSelf(void *aSelf)
-{
+void HHVideoPlayer::setSelf(void *aSelf) {
     self = aSelf;
 }
 
@@ -89,7 +83,6 @@ void HHVideoPlayer::initSwr() {
     
     is->_aSwrOutSpec.sampleRate = SAMPLE_RATE;
     is->_aSwrOutSpec.sampleFmt = AV_SAMPLE_FMT_S16;
-    
 }
 
 bool HHVideoPlayer::initAudioInfo() {
@@ -203,7 +196,7 @@ int HHVideoPlayer::frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_si
 void HHVideoPlayer::play() {
 //    if (is->state == Playing) return;;
     
-    if (is->state == Stopped) {
+//    if (is->state == Stopped) {
         std::thread([this](){
             readFile();
         }).detach();
@@ -211,9 +204,9 @@ void HHVideoPlayer::play() {
 //        std::thread([this]() {
 //            event_loop(is);
 //        }).detach();
-    }else {
-        setState(Playing);
-    }
+//    }else {
+//        setState(Playing);
+//    }
     
 }
 
@@ -266,18 +259,20 @@ void HHVideoPlayer::readFile() {
 //    AVFrame *outFrame = av_frame_alloc();
     AVPacket aPacket; 
     int index = 0;
+    int audioCout = 0;
+    int videoCout = 0 ;
+    
     while (is->state != Stopped) {
-        int vSize = is->videoq.size;
-        int aSize = is->audioq.size;
-        if (vSize + aSize  > 500) {
-            SDL_Delay(10);
+//        int vSize = is->videoq.size;
+//        int aSize = is->audioq.size;
+//        if (vSize + aSize  > 500) {
+//            SDL_Delay(10);
 //            cout<< " 缓存满了～～～～ " << endl ;
-            continue;; // 缓存足够大了就缓存
-        }
+//            continue;; // 缓存足够大了就缓存
+//        }
           
         av_format_inject_global_side_data(is->ic);
         ret = av_read_frame(is->ic, &aPacket);
-        index ++;
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(is->ic->pb)) && !is->eof) {
                 if (is->video_stream >= 0) {
@@ -299,13 +294,15 @@ void HHVideoPlayer::readFile() {
          
         if (ret == 0) {
             if (aPacket.stream_index == is->audio_stream) {
+                audioCout = audioCout + 1; 
                 addAudioPkt(&aPacket);
-                cout << &aPacket << "音频音频音频音频音频" << index  << endl;
+                cout << &aPacket << "音频音频音频音频音频" << is->audioq.serial  << endl;
             }else if (aPacket.stream_index == is->video_stream) {
-//                addVideoPkt(&aPacket);
+                videoCout = videoCout + 1;
+                addVideoPkt(&aPacket);
 //                cout << &aPacket << "视频视频视频视频" << index  << endl;
             }else {
-//                av_packet_unref(aPacket);
+                av_packet_unref(&aPacket);
             }
         }
     }
@@ -313,21 +310,16 @@ void HHVideoPlayer::readFile() {
     SDL_DestroyMutex(wait_mutex);
 }
 
-void HHVideoPlayer::setFilename(const char *filename){
+void HHVideoPlayer::setFilename(const char *filename) {
     memcpy(_filename,filename,strlen(filename) + 1);
     cout << _filename << endl;
 }
 
-static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial)
-{
+static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial) {
     MyAVPacketList *pkt1;
     int ret; // 定义变量pkt1和ret，分别用于存储数据包的地址和函数返回值
     SDL_LockMutex(q->mutex); // SDL_LockMutex(q->mutex)：锁定队列的互斥锁，保证线程安全
     for (;;) { // 循环处理数据包获取请求，直到获取到数据包或者队列被中止。
-//        if (q->abort_request) {
-//            ret = -1;
-//            break;
-//        }
         pkt1 = q->first_pkt; // 判断队列中是否有数据包可用，如果有，取出队列中的第一个数据包并更新队列信息。
         if (pkt1) {
             q->first_pkt = pkt1->next;
@@ -336,7 +328,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
             q->nb_packets--;
             q->size -= pkt1->pkt.size + sizeof(*pkt1);
             q->duration -= pkt1->pkt.duration;
-            cout << "取出一个数据包～～～" << pkt1->pkt.duration << "时间" << endl;
+            cout << "取出一个数据包～～大小: " << pkt->size <<"哈哈哈哈" << "时间" << endl;
             *pkt = pkt1->pkt;
             if (serial)
                 *serial = pkt1->serial;
@@ -354,87 +346,99 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
     return ret;
 }
 
+//int decoderAvcodeSendPacket(Decoder *d, AVPacket pkt) {
+//    int ret = 0;
+//    ret = avcodec_send_packet(d->avctx, &pkt);
+//    if (ret == AVERROR(EAGAIN)) {
+//        cout<< " 发送到解码器缓冲区失败 " <<endl;
+//    }else if (ret == 0) {
+//        cout<< " 发送到解码器成功 " << "size ==== " << pkt.size  <<endl;
+//    }else if (ret == AVERROR_EOF) {
+//        cout<< " 已经读到文件结尾，解码完成 " <<endl;
+//    }else {
+//        cout << "其他错误，需要根据具体错误码进行处理 " <<endl;
+//    }
+//    return ret;
+//}
+//
+//int decoderAvcodecReceiveFrame(Decoder *d, AVFrame *frame) {
+//    int ret = 0;
+//    ret = avcodec_receive_frame(d->avctx, frame);
+//    if (ret == AVERROR(EAGAIN)) {
+//        cout<< " 解码器缓冲区中没有可用的数据帧 " <<endl;
+//    }else if (ret == 0) {
+//        cout<< " 成功从解码器中获取数据帧 " << "pkt_size === " << frame->pkt_size <<endl;
+//    }else if (ret == AVERROR_EOF) {
+//        cout<< " 已经读到文件结尾，解码完成 " <<endl;
+//    }else {
+//        cout << "其他错误，需要根据具体错误码进行处理 " <<endl;
+//    }
+//    return ret;
+//}
+
 
 int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
-    for (; ; ) {
-        AVPacket pkt;
-        if (d->queue->serial == d->pkt_serial) {
-            do {
-//                if (d->queue->abort_request)
+    int send_ret = 0;
+    int receive_ret = 0;
+    int sendIndex = 0;
+    int receiveIndex = 0;
+    int  total = 0;
+//    for (; ; ) {
+//        AVPacket pkt;
+//        do {
+//            if (d->queue->nb_packets == 0) { // 没有待解码的包
+//                SDL_CondSignal(d->empty_queue_cond);
+//            }
+//            if (d->packet_pending) { //如果 pending =1 说明之前有在解码，移动到pkt 中
+//                av_packet_move_ref(&pkt, &d->pkt);
+//                d->packet_pending = 0;
+//            }else {
+//                ret = packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial);// 从queue中取出一个包
+//                if (ret < 0) {
 //                    return -1;
-                switch (d->avctx->codec_type) { //
-                    case AVMEDIA_TYPE_VIDEO: //
-                        ret = avcodec_receive_frame(d->avctx, frame);
-                        if (ret >= 0) {
-                            if (decoder_reorder_pts == -1) {
-                                frame->pts = frame->best_effort_timestamp;
-                            } else if (!decoder_reorder_pts) {
-                                frame->pts = frame->pkt_dts;
-                            }
-                        }
-                        break;
-                    case AVMEDIA_TYPE_AUDIO: //
-                        ret = avcodec_receive_frame(d->avctx, frame); //
-                        if (ret >= 0) {
-                            AVRational tb = (AVRational){1, frame->sample_rate};
-                            if (frame->pts != AV_NOPTS_VALUE)
-                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
-                            else if (d->next_pts != AV_NOPTS_VALUE)
-                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
-                            if (frame->pts != AV_NOPTS_VALUE) {
-                                d->next_pts = frame->pts + frame->nb_samples;
-                                d->next_pts_tb = tb;
-                            }
-                        }
-                        break;
-                }
-                if (ret == AVERROR_EOF) { // AVERROR_EOF表示解码器已经解码完毕。
-                    d->finished = d->pkt_serial;
-                    avcodec_flush_buffers(d->avctx); // 如果当前包是一个flush包，则调用avcodec_flush_buffers()函数清空解码器的缓冲区，并重置时间戳等参数
-                    return 0;
-                }
-                if (ret >= 0)
-                    return 1;
-            } while (ret != AVERROR(EAGAIN));
-        } 
-        
-        do {
-            if (d->queue->nb_packets == 0) {
-                SDL_CondSignal(d->empty_queue_cond);
-            }
-            if (d->packet_pending) {
-                av_packet_move_ref(&pkt, &d->pkt);
-                d->packet_pending = 0;
-            }else {
-                ret = packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial);
-                if (ret < 0) {
-                    return -1;
-                }
-            }
-            if (d->queue->serial == d->pkt_serial) {
-                break;
-            }
-            av_packet_unref(&pkt);
-        } while (1);
-        
-        
+//                }
+//            }
+//            if(d->queue->serial == d->pkt_serial) {
+//                break;
+//            }
+//            av_packet_unref(&pkt);
+//        } while (1);
+//
 //        if (pkt.data == flush_pkt.data) {
 //            avcodec_flush_buffers(d->avctx);
 //            d->finished = 0;
 //            d->next_pts = d->start_pts;
 //            d->next_pts_tb = d->start_pts_tb;
+//            cout<< "第一针～～～～～～～～～" << endl;
 //        }else {
-            if (d->avctx->codec_type == AVMEDIA_TYPE_VIDEO ||
-                d->avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-                if (avcodec_send_packet(d->avctx, &pkt) == AVERROR(EAGAIN)) {
-                    d->packet_pending = 1;
-                    av_packet_move_ref(&d->pkt, &pkt);
-                }
-            }
-            av_packet_unref(&pkt);
+//            if (d->avctx->codec_type == AVMEDIA_TYPE_VIDEO ||
+//                d->avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
+//                send_ret = avcodec_send_packet(d->avctx, &pkt);
+//                cout<< "send_ret == " << send_ret << endl;
+//                if (send_ret == 0) {
+//                    total = total + pkt.size;
+//                    cout<< "pkt.size == "<< pkt.size << "total:" << total <<endl;
+//                }else {
+//                    cout<< " 错误～～ ret:"<< ret << endl;
+//                }
+////                ret = decoderAvcodeSendPacket(d->avctx, &pkt);
+////                receive_ret = avcodec_receive_frame(d->avctx, frame);
+////                cout<< "receive_ret == " << receive_ret << endl;
+////                if (send_ret == 0 && receive_ret == 0) {
+////                    total = total + pkt.size;
+////                    cout<< "pkt.size == "<< pkt.size << "frame.size === " << frame->pkt_size << "total:" << total <<endl;
+////                }
+////                ret = decoderAvcodecReceiveFrame(d->avctx, frame);
+////                cout<< "🍊🍊🍊 ====receiveIndex =" << receiveIndex << ",ret ==== " << ret << endl;
+//            }else {
+//                cout<< " 失败了？？？？？？？？？？？？？？  " <<endl;
+//            }
+//            av_packet_unref(&pkt);
 //        }
-    }
+//    }
+    
+    return -1;
 }
 
 static void frame_queue_push(FrameQueue *f) {
@@ -448,38 +452,51 @@ static void frame_queue_push(FrameQueue *f) {
 }
 
 
-static Frame *frame_queue_peek_writable(FrameQueue *f)
-{ // ，它会在帧队列中有空间可用之前一直等待，并阻塞当前线程，直到有新的帧可被写入队列
+static Frame *frame_queue_peek_writable(FrameQueue *f) { // ，它会在帧队列中有空间可用之前一直等待，并阻塞当前线程，直到有新的帧可被写入队列
     SDL_LockMutex(f->mutex);
     while (f->size >= f->max_size &&!f->pktq->abort_request) {
         SDL_CondWait(f->cond, f->mutex);
     }
     SDL_UnlockMutex(f->mutex);
-
-//    if (f->pktq->abort_request)
-//        return NULL;
-
+  
     return &f->queue[f->windex];
 }
 
-int audio_decoder_thread(void *avg)
-{
+int audio_decoder_thread(void *avg) {
     VideoState *vs = (VideoState *)avg;
-    AVFrame *frame = av_frame_alloc();
-    Frame *af;
-    int got_frame = 0;
-    AVRational tb;
+   
+    AVFrame *frame = av_frame_alloc(); // 用于存储解码信息，通常用于音视频解码器的解码操作
+    Frame *af; // 用来存储解码后的音频帧
+    int last_serial = -1; //表示上一个解码数据包的序列号
+    int reconfigure; // 表示是否需要对视频解码器进行重新配置
+    int got_frame = 0; // 表示当前解码操作是否成功。如果解码操作成功，got_frame 会被置为1，否则为0。
+    AVRational tb; // 视频解码时，视频帧的时间戳需要以该时间单位表示
     int ret = 0;
-
-    if (!frame)
-        return AVERROR(ENOMEM);
-
+     
+    cout<< "解码～～～～～解码～～～～解码～～～～" << endl;
+//
+//    got_frame = decoder_decode_frame(&vs->auddec, frame, NULL);
 //    do {
-//        got_frame = decoder_decode_frame(&vs->auddec, frame, NULL);
-//        cout<< "decoder_decode_frame -----------" << endl;
+////        cout<< "decoder_decode_frame -----------" << endl;
+////        if (got_frame) {
+////            tb = (AVRational){1, frame->sample_rate};
+////            af = frame_queue_peek_writable(&vs->sampq);
+////            af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+////            af->pos = frame->pkt_pos;
+////            af->serial = vs->auddec.pkt_serial;
+////            af->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
+////            av_frame_move_ref(af->frame, frame);
+////            frame_queue_push(&vs->sampq);
+////        }
+//    }while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
+    
+//    do {
+//        if ((got_frame = decoder_decode_frame(&vs->auddec, frame, NULL)) < 0)
+//            goto the_end;
 //        if (got_frame) {
 //            tb = (AVRational){1, frame->sample_rate};
-//            af = frame_queue_peek_writable(&vs->sampq);
+//            if (!(af = frame_queue_peek_writable(&vs->sampq)))
+//                goto the_end;
 //            af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
 //            af->pos = frame->pkt_pos;
 //            af->serial = vs->auddec.pkt_serial;
@@ -487,50 +504,20 @@ int audio_decoder_thread(void *avg)
 //            av_frame_move_ref(af->frame, frame);
 //            frame_queue_push(&vs->sampq);
 //        }
-//    }while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
-    
-    do {
-           if ((got_frame = decoder_decode_frame(&vs->auddec, frame, NULL)) < 0)
-               goto the_end;
-           if (got_frame) {
-                   tb = (AVRational){1, frame->sample_rate};
-                   if (!(af = frame_queue_peek_writable(&vs->sampq)))
-                       goto the_end;
-
-                   af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
-                   af->pos = frame->pkt_pos;
-                   af->serial = vs->auddec.pkt_serial;
-                   af->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
-                   av_frame_move_ref(af->frame, frame);
-                   frame_queue_push(&vs->sampq);
-           }
-       } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
+//    } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
     
 the_end:
     cout<< "aaaa哈哈哈哈哈" << endl;
     return 0;
 }
 
-#pragma mark - open Method
-int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params) {
-    
-    int wanted_spec, spec;
-    const char *env;
-    static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
-    static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
-    int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
-    
-    
-    return 1;
-}
-
+#pragma mark - open Method  
+#pragma mark - Decoder 初始化～～～～
 int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
     AVFormatContext *ic = tis->ic;
     AVCodecContext *avctx;
     AVCodec *codec;
     const char *forced_codec_name = NULL;
-//    AVDictionary *opts = NULL;
-//    AVDictionaryEntry *t = NULL;
     int sample_rate, nb_channels;
     int64_t channel_layout;
     int ret = 0;
@@ -540,6 +527,8 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
         return  -1;
     }
     avctx = is->audioCodecCtx;//avcodec_alloc_context3(NULL);
+    ret = avcodec_open2(avctx, codec, nullptr);
+    
     if (!avctx) {
         return AVERROR(ENOMEM);
     }
@@ -567,29 +556,18 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
             sample_rate    = avctx->sample_rate;
             nb_channels    = avctx->channels;
             channel_layout = avctx->channel_layout;
-            ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt);
-           
-            is->audio_hw_buf_size = ret;
+//            ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt);
+            // 不知何用～～～～～
+//            is->audio_hw_buf_size = ret;
             is->audio_src = is->audio_tgt;
             is->audio_buf_size = 0;
             is->audio_buf_index = 0;
-            is->audio_diff_avg_coef  = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
-            is->audio_diff_avg_count = 0;
-            is->audio_diff_threshold = (double)(is->audio_hw_buf_size) / is->audio_tgt.bytes_per_sec;
             is->audio_stream = stream_index;
             is->audio_st = ic->streams[stream_index];
-            decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread);
-        
+            // 不知何用～～～～～
+            decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread); // Decoder 初始化
             ret = decoder_start(&is->auddec);
 #pragma mark 解码解码解码
-            cout << "解码解码解码 🚀🚀🚀🚀🚀🚀🚀🚀🚀" << endl;
-//            is->auddec.decoder_tid = SDL_CreateThread(audio_thread(), "audio_decoder", is);
-//            int HHVideoPlayer::decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void *arg)
-//            packet_queue_start(d->queue);
-//            d->decoder_tid = SDL_CreateThread(fn, thread_name, arg);
-//            if (!d->decoder_tid) {
-//                return AVERROR(ENOMEM);
-//            }
         }
             break;
         case AVMEDIA_TYPE_VIDEO: {
@@ -621,6 +599,7 @@ void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     pkt1 = (MyAVPacketList *)av_malloc(sizeof(MyAVPacketList));
     pkt1->pkt = *pkt;
     pkt1 -> next = NULL;
+    q->serial ++;
     pkt1->serial = is->audioq.serial;
     if (!q->last_pkt) {
         q->first_pkt = pkt1;
@@ -631,7 +610,7 @@ void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     q->nb_packets++;
     q->size += pkt1->pkt.size + sizeof(*pkt1);
     q->duration += pkt1->pkt.duration;
-    cout<< "音频帧大小～～" << pkt1->pkt.size << "序号：" << pkt1->serial <<endl;
+//    cout<< "音频帧大小～～" << pkt1->pkt.size << "序号：" << pkt1->serial <<endl;
 }
 
 int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index) {
@@ -644,8 +623,7 @@ int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index
     return 1;
 }
 
-void HHVideoPlayer::packet_queue_start(PacketQueue *q)
-{
+void HHVideoPlayer::packet_queue_start(PacketQueue *q) {
     SDL_LockMutex(q->mutex); // 锁定互斥锁，保证线程安全。
 //    q->abort_request = 0; // 清除队列中止标志位，表示队列可以开始正常运行。
     packet_queue_put_private(q, &flush_pkt); // 在队列中加入一个名为flush_pkt的数据包，作为队列的起始标志，可以清空队列中的所有数据
@@ -662,3 +640,24 @@ int HHVideoPlayer::decoder_start(Decoder *d) {
     return 0;
 }
   
+
+#pragma mark - clock
+static void set_clock_at(Clock *c, double pts, int serial, double time) {
+    c->pts = pts;
+    c->last_updated = time;
+    c->pts_drift = c->pts - time;
+    c->serial = serial;
+}
+
+static void set_clock(Clock *c, double pts, int serial) {
+    double time = av_gettime_relative() / 1000000.0;
+    set_clock_at(c, pts, serial, time);
+}
+
+void HHVideoPlayer::init_clock(Clock *c, int *queue_serial) {
+    c->speed = 1.0;
+    c->paused = 0;
+    c->queue_serial = queue_serial;
+    set_clock(c, NAN, -1);
+}
+

@@ -619,7 +619,7 @@ typedef struct AVCodecContext {
      * MPEG-4: global headers (they can be in the bitstream or here)
      * The allocated memory should be AV_INPUT_BUFFER_PADDING_SIZE bytes larger
      * than extradata_size to avoid problems if it is read with the bitstream reader.
-     * The bytewise contents of extradata must not depend on the architecture or CPU endianness.
+     * The bytewise contents of extradata mustnot depend on the architecture or CPU endianness.
      * Must be allocated with the av_malloc() family of functions.
      * - encoding: Set/allocated/freed by libavcodec.
      * - decoding: Set/allocated/freed by user.
