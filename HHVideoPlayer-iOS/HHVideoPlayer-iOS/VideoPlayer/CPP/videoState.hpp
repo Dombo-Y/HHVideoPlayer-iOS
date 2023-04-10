@@ -22,6 +22,8 @@ using namespace std;
 #define MIN_FRAMES 25 // 表示播放最少需要的帧数。
 #define AUDIO_DIFF_AVG_NB   20 // 表示用于计算平均音视频差异的音视频差异数量。
 
+#define SAMPLE_ARRAY_SIZE (8 * 65536) // 表示音频样本数组的大小
+
 enum {
     AV_SYNC_AUDIO_MASTER, /* default choice */ // 表示以音频作为主时钟进行同步，为默认选择。
     AV_SYNC_VIDEO_MASTER, // 表示以视频作为主时钟进行同步。
@@ -153,7 +155,9 @@ typedef struct VideoState {
     
     int seek_req; // 是否需要跳转到媒体文件的某个位置
     int seek_flags; // 跳转的标识符
-    
+     
+    int16_t sample_array[SAMPLE_ARRAY_SIZE]; // 存储音频样本的数组
+    int sample_array_index; // 音频样本数组中当前的索引值
     int audio_stream; // 音频流的索引号
     int video_stream;// 视频流的索引号
     char *filename;// 文件名称

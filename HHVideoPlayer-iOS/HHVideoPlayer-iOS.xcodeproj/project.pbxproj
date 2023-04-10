@@ -651,12 +651,12 @@
 		D17631B529DDB0D200D25BA7 /* lib */ = {
 			isa = PBXGroup;
 			children = (
-				D17631B629DDB0D200D25BA7 /* libavutil.a */,
-				D17631B729DDB0D200D25BA7 /* libavfilter.a */,
 				D17631B829DDB0D200D25BA7 /* libavcodec.a */,
-				D17631B929DDB0D200D25BA7 /* libpostproc.a */,
-				D17631BA29DDB0D200D25BA7 /* libavformat.a */,
 				D17631BB29DDB0D200D25BA7 /* libavdevice.a */,
+				D17631B729DDB0D200D25BA7 /* libavfilter.a */,
+				D17631BA29DDB0D200D25BA7 /* libavformat.a */,
+				D17631B629DDB0D200D25BA7 /* libavutil.a */,
+				D17631B929DDB0D200D25BA7 /* libpostproc.a */,
 				D17631BC29DDB0D200D25BA7 /* libswresample.a */,
 				D17631BD29DDB0D200D25BA7 /* libswscale.a */,
 			);
@@ -875,15 +875,15 @@
 		D1AD0EEA29E1A62C00F8AB68 /* Example */ = {
 			isa = PBXGroup;
 			children = (
+				D1AD0EEF29E1A62C00F8AB68 /* cmdutils.c */,
 				D1AD0EEB29E1A62C00F8AB68 /* cmdutils.h */,
 				D1AD0EEC29E1A62C00F8AB68 /* condmutex.cpp */,
-				D1AD0EED29E1A62C00F8AB68 /* videoPlayer.cpp */,
 				D1AD0EEE29E1A62C00F8AB68 /* condmutex.h */,
-				D1AD0EEF29E1A62C00F8AB68 /* cmdutils.c */,
 				D1AD0EF029E1A62C00F8AB68 /* PlayerCInterface.h */,
-				D1AD0EF329E1A62C00F8AB68 /* videoPlayer.h */,
-				D1AD0EF129E1A62C00F8AB68 /* videoPlayer_video.cpp */,
 				D1AD0EF229E1A62C00F8AB68 /* videoPlayer_audio.cpp */,
+				D1AD0EF129E1A62C00F8AB68 /* videoPlayer_video.cpp */,
+				D1AD0EED29E1A62C00F8AB68 /* videoPlayer.cpp */,
+				D1AD0EF329E1A62C00F8AB68 /* videoPlayer.h */,
 			);
 			path = Example;
 			sourceTree = "<group>";

@@ -82,5 +82,9 @@ private:
     int synchronize_audio(VideoState *is, int nb_samples);
     void sync_clock_to_slave(Clock *c, Clock *slave);
     double get_clock(Clock *c);
+    
+    double get_master_clock(VideoState *is);
+    int get_master_sync_type(VideoState *is);
+    void frame_queue_next(FrameQueue *f);
 };
 #endif /* HHVideoPlayer_hpp */

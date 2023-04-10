@@ -57,6 +57,7 @@ extern "C" {
     _player = new VideoPlayer();   //初始化播放器
     _hhPlayer = new HHVideoPlayer();
     _path = [[NSBundle mainBundle] pathForResource:@"output" ofType:@"mp4"]; //大文件
+     
 }
 
 - (UIView *)contentView {

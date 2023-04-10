@@ -20,6 +20,7 @@
 #define SDL_AUDIO_MIN_BUFFER_SIZE 512 // 表示 SDL 音频缓冲区的最小大小
 #define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30 // 表示音频回调的最大次数
 #define AV_NOSYNC_THRESHOLD 10.0 // 表示如果同步错误太大，则不会进行音视频同步
+#define SAMPLE_CORRECTION_PERCENT_MAX 10 // 表示音频速度变化的最大值。
 
 static int64_t audio_callback_time;
 
@@ -434,7 +435,7 @@ int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     return -1;
 }
 
-static void frame_queue_push(FrameQueue *f) {
+static Frame *frame_queue_push(FrameQueue *f) {
     if (++f->windex == f->max_size)
         f->windex = 0;
     SDL_LockMutex(f->mutex);
@@ -442,6 +443,27 @@ static void frame_queue_push(FrameQueue *f) {
     SDL_CondSignal(f->cond); // 它会将写入位置（windex）向前移动一个位置，并检查是否已经移动到队列的末尾。如果已经到了队列末尾，它会将写入位置（windex）重置为 0。
     SDL_UnlockMutex(f->mutex);
     cout << "frame_queue_push 解码后的大小事多少啊啊啊" <<  f->size << endl;
+    
+    return &f->queue[(f->rindex + f->rindex_shown)% f->max_size];
+}
+
+static void frame_queue_unref_item(Frame *vp) {
+    av_frame_unref(vp->frame);
+//    avsubtitle_free(&vp->sub);
+}
+
+void HHVideoPlayer::frame_queue_next(FrameQueue *f) {
+    if (f->keep_last && !f->rindex_shown) {
+        f->rindex_shown = 1;
+        return;
+    }
+    frame_queue_unref_item(&f->queue[f->rindex]);
+    if (++f->rindex == f->max_size)
+        f->rindex = 0;
+    SDL_LockMutex(f->mutex);
+    f->size--;
+    SDL_CondSignal(f->cond);
+    SDL_UnlockMutex(f->mutex);
 }
 
 
@@ -513,7 +535,6 @@ int HHVideoPlayer::stream_component_openA(VideoState *tis, int stream_index) {
     AVFrame *frame = av_frame_alloc();
     int receiveIndex = 0;
     do {
-        int bytesPerSampleFrame = 0;
         pkt = is->audioq.first_pkt->pkt;
         MyAVPacketList *first_pkt = is->audioq.first_pkt;
         MyAVPacketList *next = first_pkt->next;
@@ -701,8 +722,7 @@ int HHVideoPlayer::decoder_start(Decoder *d) {
     }
     return 0;
 }
-  
-
+   
 #pragma mark - clock
 static void set_clock_at(Clock *c, double pts, int serial, double time) {
     c->pts = pts;
@@ -789,9 +809,21 @@ int HHVideoPlayer::audio_decode_frame(VideoState *is) {
     int64_t dec_channel_layout;
     av_unused double audio_clock0;
     int wanted_nb_samples;
-    Frame *af;
+    Frame *af = nullptr;
     
-    data_size = 100;//av_samples_get_buffer_size(NULL, af->frame->channels, af->frame->nb_samples, af->frame->format, 1);
+    do {
+        if (!(af = frame_queue_push(&is->sampq))) {
+            return -1;
+        }
+        frame_queue_next(&is->sampq);
+    } while (af->serial != is->audioq.serial);
+    
+     
+    int nb_channels = af->frame->channels;
+    int nb_samples = af->frame->nb_samples;
+    AVSampleFormat sample_fmt = static_cast<AVSampleFormat>(af->frame->format);
+    int align = 1;
+    data_size = av_samples_get_buffer_size(NULL, nb_channels, nb_samples, sample_fmt, 1);
     dec_channel_layout = (af->frame->channel_layout && af->frame->channels == av_get_channel_layout_nb_channels(af->frame->channel_layout)) ? af->frame->channel_layout : av_get_default_channel_layout(af->frame->channels);
     wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples);
     bool format_comp = af->frame->format != is->audio_src.fmt;
@@ -799,7 +831,8 @@ int HHVideoPlayer::audio_decode_frame(VideoState *is) {
     bool sample_comp = af->frame->sample_rate != af->frame->nb_samples;
     if ( format_comp || channel_comp|| (sample_comp && !is->swr_ctx)) {
         swr_free(&is->swr_ctx);
-//        is->swr_ctx = swr_alloc_set_opts(NULL, is->audio_tgt.channel_layout, is->audio_tgt.fmt, is->audio_tgt.freq, dec_channel_layout, af->frame->format, af->frame->sample_rate, 0, NULL);
+        AVSampleFormat inSampleFmt = static_cast<AVSampleFormat>(af->frame->format);
+        is->swr_ctx = swr_alloc_set_opts(NULL, is->audio_tgt.channel_layout, is->audio_tgt.fmt, is->audio_tgt.freq, dec_channel_layout, inSampleFmt, af->frame->sample_rate, 0, NULL);
         if (!is->swr_ctx || swr_init(is->swr_ctx) < 0) {
             return -1;
         }
@@ -811,7 +844,7 @@ int HHVideoPlayer::audio_decode_frame(VideoState *is) {
     if (is->swr_ctx) {
         const uint8_t **in = (const uint8_t **)af->frame->extended_data;
         uint8_t **out = &is->audio_buf1;
-        int out_cout = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate + 256;
+        int out_cout = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate + 256; // 计算所需音频缓冲区的大小,256是额外大小防止缓冲区溢出
         int out_size = av_samples_get_buffer_size(NULL, is->audio_tgt.channels, out_cout, is->audio_tgt.fmt, 0);
         int len2;
         if (out_size < 0) {
@@ -858,23 +891,82 @@ int HHVideoPlayer::audio_decode_frame(VideoState *is) {
 }
 
 void HHVideoPlayer::update_sample_display(VideoState *is, short *samples, int samples_size) {
-//    int size, len;
-//    size = samples_size / sizeof(short);
-//    while (size > 0) {
-//        len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
-//        if (len > size)
-//            len = size;
-//        memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(short));
-//        samples += len;
-//        is->sample_array_index += len;
-//        if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
-//            is->sample_array_index = 0;
-//        size -= len;
-//    }
+    int size, len;
+    size = samples_size / sizeof(short);
+    while (size > 0) {
+        len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
+        if (len > size)
+            len = size;
+        memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(short));
+        samples += len;
+        is->sample_array_index += len;
+        if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
+            is->sample_array_index = 0;
+        size -= len;
+    }
+}
+
+
+int HHVideoPlayer::get_master_sync_type(VideoState *is) {
+    if (is->av_sync_type == AV_SYNC_VIDEO_MASTER) { // 如果主同步类型是"AV_SYNC_VIDEO_MASTER"，则返回"AV_SYNC_VIDEO_MASTER"，表示视频流作为主时钟。
+        if (is->video_st)
+            return AV_SYNC_VIDEO_MASTER;
+        else
+            return AV_SYNC_AUDIO_MASTER;
+    } else if (is->av_sync_type == AV_SYNC_AUDIO_MASTER) { // 如果主同步类型是"AV_SYNC_AUDIO_MASTER"，则返回"AV_SYNC_AUDIO_MASTER"，表示音频流作为主时钟。
+        if (is->audio_st)
+            return AV_SYNC_AUDIO_MASTER;
+        else
+            return AV_SYNC_EXTERNAL_CLOCK;
+    } else { // 如果主同步类型是其他类型，则返回"AV_SYNC_EXTERNAL_CLOCK"，表示使用外部时钟作为主时钟。
+        return AV_SYNC_EXTERNAL_CLOCK;
+    }
+}
+
+double HHVideoPlayer::get_master_clock(VideoState *is) {
+    double val;
+ // 函数通过调用get_master_sync_type(is)函数获取当前的同步类型，并根据同步类型选择使用哪个时钟来获取当前主时钟值
+    switch (get_master_sync_type(is)) {
+        case AV_SYNC_VIDEO_MASTER:
+            val = get_clock(&is->vidclk); // 如果同步类型是AV_SYNC_VIDEO_MASTER，则使用is->vidclk时钟来获取主时钟值；；
+            break;
+        case AV_SYNC_AUDIO_MASTER:
+            val = get_clock(&is->audclk); // 如果同步类型是AV_SYNC_AUDIO_MASTER，则使用is->audclk时钟
+            break;
+        default:
+            val = get_clock(&is->extclk); // 否则，使用is->extclk时钟。
+            break;
+    }
+    return val;
 }
 
 int HHVideoPlayer::synchronize_audio(VideoState *is, int nb_samples) {
+    int wanted_nb_samples = nb_samples;
     
+    if (get_master_sync_type(is) != AV_SYNC_AUDIO_MASTER) {
+        double diff, avg_diff;
+        int min_nb_samples, max_nb_samples;
+        diff = get_clock(&is->audclk) - get_master_clock(is);// 计算音频时钟和主时钟之间的差异
+        if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
+            is->audio_diff_cum = diff + is->audio_diff_avg_coef * is->audio_diff_cum;
+            if (is->audio_diff_avg_count < AUDIO_DIFF_AVG_NB) {
+                is->audio_diff_avg_count ++;
+            }else {
+                avg_diff = is->audio_diff_cum * (1.0 - is->audio_diff_avg_coef);
+                if (fabs(avg_diff) >= is->audio_diff_threshold) {
+                    wanted_nb_samples = nb_samples + (int)(diff * is->audio_src.freq);
+                    min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));// 调整音频样本数量时允许的最小值
+                    max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100)); // 样本数量的最大百分比调整值。
+                    wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
+                }
+            }
+        }
+        
+    }else {
+        is->audio_diff_avg_count = 0;
+        is->audio_diff_cum = 0;
+    }
 
-    return 1;
+    return wanted_nb_samples;
 }
+

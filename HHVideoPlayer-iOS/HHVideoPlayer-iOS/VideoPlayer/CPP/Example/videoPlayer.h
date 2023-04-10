@@ -36,7 +36,7 @@
 #define CONTINUE(func) CODE(func,continue;)
 
 #define BREAK(func) CODE(func,break;)
-/*  预处理视频，不负责显示、渲染视频 */
+
 class VideoPlayer
 {
 public:

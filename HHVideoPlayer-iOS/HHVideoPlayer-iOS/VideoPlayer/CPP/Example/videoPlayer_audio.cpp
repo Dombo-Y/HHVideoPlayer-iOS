@@ -7,8 +7,6 @@
 
 #include "videoPlayer.h"
 
-#include "PlayerCInterface.h"
-
 /* 一些宏定义 */
 #define SAMPLE_RATE 44100 // 采样率
 #define SAMPLE_FORMAT AUDIO_S16LSB// 采样格式
@@ -43,8 +41,7 @@ int VideoPlayer::initSwr(){
     //创建重采样上下文
     _aSwrCtx = swr_alloc_set_opts(nullptr, _aSwrOutSpec.chLayout, _aSwrOutSpec.sampleFmt, _aSwrOutSpec.sampleRate,
                                   _aSwrInSpec.chLayout, _aSwrInSpec.sampleFmt,  _aSwrInSpec.sampleRate,
-                                  0, nullptr);
-     
+                                  0, nullptr); 
     if (!_aSwrCtx) {
         cout << "swr_alloc_set_opts error" << endl;
         return -1;

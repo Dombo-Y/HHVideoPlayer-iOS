@@ -6,8 +6,7 @@
 //
 
 #include "cmdutils.h"
-
-
+ 
 
 int check_stream_specifier(AVFormatContext *s, AVStream *st, const char *spec)
 {

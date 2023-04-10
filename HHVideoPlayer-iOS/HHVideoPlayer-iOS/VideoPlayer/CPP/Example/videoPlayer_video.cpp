@@ -18,8 +18,7 @@ int VideoPlayer::initVideoInfo(){ //初始化视频信息
     RET(initDecoder);
 
     ret = initSws();  //初始化视频像素格式转换
-    RET(initSws);
-
+    RET(initSws); 
     return 0;
 }
 
