@@ -177,11 +177,14 @@ typedef struct VideoState {
     AVStream *video_st; // 视频流的上下文
      
     int audio_clock_serial; // 音频时钟的序列号
+    double audio_clock; // 音频时钟
     int eof; // : 判断是否已到达文件末尾
     int av_sync_type; // 音视频同步类型
     
     double max_frame_duration; // 视频帧的最大持续时间，超过了的设定值，应用程序应该将其忽略或者重新计算时间戳，以便更好地控制帧率和播放速度。
-       
+        
+    
+    struct SwrContext *swr_ctx;
     struct AudioParams audio_tgt;// 音频解码后的参数
     struct AudioParams audio_src; // 音频解码前的参数
     
@@ -196,6 +199,9 @@ typedef struct VideoState {
     double audio_diff_threshold; // 音频差异的阈值
     int audio_diff_avg_count; // 音频差异的平均计数
     
+    uint8_t *audio_buf; // 音频缓冲区
+    uint8_t *audio_buf1; // 音频缓冲区1
+    
     bool  haveAudio; // 有音频
     bool  haveVideo; // 有视频
     
@@ -205,8 +211,10 @@ typedef struct VideoState {
     HHVideoState state = Stopped;
     int seekTime = -1;
        
-    SwrContext *_aSwrCtx = nullptr;    //音频重采样上下文
-    AudioSwrSpec _aSwrInSpec,_aSwrOutSpec;   //音频重采样输入/输出参数
+//    SwrContext *_aSwrCtx = nullptr;    //音频重采样上下文
+//    AudioSwrSpec _aSwrInSpec,_aSwrOutSpec;   //音频重采样输入/输出参数
+//    struct AudioParams audio_src; // 音频解码前的参数
+//    struct AudioParams audio_tgt;// 音频解码后的参数
     AVFrame *_aSwrInFrame = nullptr,*_aSwrOutFrame = nullptr;   //存放解码后的音频重采样输入/输出数据
 
 }VideoState;

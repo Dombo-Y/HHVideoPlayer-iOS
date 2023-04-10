@@ -17,7 +17,12 @@
 #define SAMPLE_SIZE SDL_AUDIO_BITSIZE(SAMPLE_FORMAT)// 采样大小
 #define CHANNELS 2 // 声道数
 #define SAMPLES 512 // 音频缓冲区的样本数量
-  
+#define SDL_AUDIO_MIN_BUFFER_SIZE 512 // 表示 SDL 音频缓冲区的最小大小
+#define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30 // 表示音频回调的最大次数
+#define AV_NOSYNC_THRESHOLD 10.0 // 表示如果同步错误太大，则不会进行音视频同步
+
+static int64_t audio_callback_time;
+
 static AVPacket flush_pkt;
  
 void HHVideoPlayer::initVideoState() {
@@ -76,13 +81,13 @@ void HHVideoPlayer::setSelf(void *aSelf) {
 
 #pragma mark - Init Method
 void HHVideoPlayer::initSwr() {
-    is->_aSwrOutSpec.sampleRate = is->audioCodecCtx->sample_rate;
-    is->_aSwrInSpec.sampleFmt = is->audioCodecCtx->sample_fmt;
-    is->_aSwrInSpec.chLayout = static_cast<int>(is->audioCodecCtx->channel_layout);
-    is->_aSwrInSpec.chs = is->audioCodecCtx->channels;
-    
-    is->_aSwrOutSpec.sampleRate = SAMPLE_RATE;
-    is->_aSwrOutSpec.sampleFmt = AV_SAMPLE_FMT_S16;
+//    is->_aSwrOutSpec.sampleRate = is->audioCodecCtx->sample_rate;
+//    is->_aSwrInSpec.sampleFmt = is->audioCodecCtx->sample_fmt;
+//    is->_aSwrInSpec.chLayout = static_cast<int>(is->audioCodecCtx->channel_layout);
+//    is->_aSwrInSpec.chs = is->audioCodecCtx->channels;
+//
+//    is->_aSwrOutSpec.sampleRate = SAMPLE_RATE;
+//    is->_aSwrOutSpec.sampleFmt = AV_SAMPLE_FMT_S16;
 }
 
 bool HHVideoPlayer::initAudioInfo() {
@@ -122,11 +127,9 @@ int HHVideoPlayer::initAudioSwr() {
 //   SwrContext *aSwrCtx = nullptr;    //音频重采样 
 //    swr_alloc_set_opts(aSwrCtx, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
    ret = swr_init(aSwrCtx);
-   
-    is->_aSwrInFrame = av_frame_alloc();
-    is->_aSwrOutFrame = av_frame_alloc();
-    ret = av_samples_alloc(is->_aSwrOutFrame->data, is->_aSwrOutFrame->linesize, is->_aSwrOutSpec.chs, 4096, is->_aSwrOutSpec.sampleFmt, 1);
- 
+//    is->_aSwrInFrame = av_frame_alloc();
+//    is->_aSwrOutFrame = av_frame_alloc();
+//    ret = av_samples_alloc(is->_aSwrOutFrame->data, is->_aSwrOutFrame->linesize, is->_aSwrOutSpec.chs, 4096, is->_aSwrOutSpec.sampleFmt, 1);
 //    swr_alloc_set_opts(aSwrCtx, out_chLayout, out_samplefmt, outSampleRate, in_channel_layout, in_sp_fmt, in_sample_rate, 0, nullptr);
 //    swr_alloc_set_opts(<#struct SwrContext *s#>, <#int64_t out_ch_layout#>, <#enum AVSampleFormat out_sample_fmt#>, <#int out_sample_rate#>, <#int64_t in_ch_layout#>, <#enum AVSampleFormat in_sample_fmt#>, <#int in_sample_rate#>, <#int log_offset#>, <#void *log_ctx#>)
    //    av_samples_alloc(outFrame->data, outFrame->linesize, out_chs, 4096, out_samplefmt, 1);
@@ -238,9 +241,9 @@ void HHVideoPlayer::readFile() {
     is->state = Playing;
     SDL_PauseAudio(0);
     
-//    if (is->haveAudio) {
-//        stream_component_open(is, is->audio_stream);
-//    }
+    if (is->haveAudio) {
+        stream_component_open(is, is->audio_stream);
+    }
     
 //    if (is->haveVideo) {
 //        stream_component_open(is, is->video_stream);
@@ -288,7 +291,7 @@ void HHVideoPlayer::readFile() {
                 cout << &aPacket << "音频音频音频音频音频" << is->audioq.serial  << endl;
             }else if (aPacket.stream_index == is->video_stream) {
                 videoCout = videoCout + 1;
-                addVideoPkt(&aPacket);
+//                addVideoPkt(&aPacket);
 //                cout << &aPacket << "视频视频视频视频" << index  << endl;
             }else {
                 av_packet_unref(&aPacket);
@@ -330,6 +333,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
         } else { // 如果没有数据包可用，但需要阻塞等待，则调用SDL_CondWait函数等待条件变量的信号。
             SDL_CondWait(q->cond, q->mutex);
         }
+        cout<< "packet_queue_get ～～ 一直在循环" << endl;
     }
     SDL_UnlockMutex(q->mutex); // SDL_UnlockMutex(q->mutex)：解锁队列的互斥锁，释放线程安全控制。
     return ret;
@@ -503,7 +507,7 @@ the_end:
 #pragma mark - open Method  
 #pragma mark - Decoder 初始化～～～～
 int HHVideoPlayer::stream_component_openA(VideoState *tis, int stream_index) {
-    cout<< " 开始读取数据～～～～ " << endl;
+    cout<< " 开始读取数据～～～～ " <<endl;
     int ret = 0;
     AVPacket pkt;
     AVFrame *frame = av_frame_alloc();
@@ -519,14 +523,18 @@ int HHVideoPlayer::stream_component_openA(VideoState *tis, int stream_index) {
         ret = avcodec_receive_frame(is->audioCodecCtx, frame);
         receiveIndex = receiveIndex + 1;
         if (ret == 0) {
-            cout<< "解码成功～～～～" << first_pkt<< "🃏🃏🃏" << frame->pkt_size << "~~~～"<< receiveIndex << endl;
+            is->audioq.size = is->audioq.size - pkt.size - sizeof(*first_pkt);
+            cout<< "解码成功～～～～" << first_pkt<< "🃏🃏🃏" << is->audioq.size << "~~~～"<< receiveIndex << endl;
             is->audioq.first_pkt = next;
-//            bytesPerSampleFrame = is
         }else {
             cout<< "解码失败～～～～～" << ret << "🃏🃏🃏" << ret << "~~~～" << receiveIndex << endl;
             is->audioq.first_pkt = next;
         }
-//        av_packet_unref(&pkt);
+        if (ret == AVERROR_EOF) {
+            cout<< "释放前～～～～"<< &pkt << endl;
+            av_packet_unref(&pkt);
+            cout<< "释放成功～～～～"<< &pkt << endl;
+        }
     } while (ret != AVERROR_EOF);
      
 //    pkt = is->audioq.first_pkt->pkt;
@@ -583,12 +591,24 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
      
     is->eof = 0;
     
+    sample_rate    = avctx->sample_rate;
+    nb_channels    = avctx->channels;
+    channel_layout = avctx->channel_layout;
+    
+    SDL_AudioSpec wanted_spec , spec;
+    wanted_spec.channels = nb_channels;
+    wanted_spec.freq = sample_rate;
+    wanted_spec.format = AUDIO_S16SYS;
+    wanted_spec.silence = 0;
+    wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, 2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
+//    wanted_spec.callback =
+    wanted_spec.userdata = is;
     switch (avctx->codec_type) {
         case AVMEDIA_TYPE_AUDIO: {
-//            sample_rate    = avctx->sample_rate;
-//            nb_channels    = avctx->channels;
-//            channel_layout = avctx->channel_layout;
-////            ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt);
+            ret = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &spec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE);
+            cout<< "SDL_OpenAudioDevice~~~~~~" << ret << endl;
+//            ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt);
+//            cout << "audio_open---audio_open "<< ret << endl;
 //            // 不知何用～～～～～
 ////            is->audio_hw_buf_size = ret;
 //            is->audio_src = is->audio_tgt;
@@ -649,7 +669,10 @@ void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     q->nb_packets++;
     q->size += pkt1->pkt.size + sizeof(*pkt1);
     q->duration += pkt1->pkt.duration;
-//    cout<< "音频帧大小～～" << pkt1->pkt.size << "序号：" << pkt1->serial <<endl;
+   
+    if (pkt1->pkt.stream_index == 1) {
+        cout<< "音频帧大小～～" << q->size <<"啊对对对对"<< "序号：" << q->serial <<endl;
+    }
 }
 
 int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index) { //初始化一个空包
@@ -700,3 +723,158 @@ void HHVideoPlayer::init_clock(Clock *c, int *queue_serial) {
     set_clock(c, NAN, -1);
 }
 
+
+void HHVideoPlayer::sdl_audio_callback(void *opaque, Uint8 *stream, int len) {
+    VideoState *is_t = (VideoState *)opaque;
+    int audio_size, len1;
+    audio_callback_time = av_gettime_relative();
+    
+    while (len > 0) {
+        if (is->audio_buf_index >= is->audio_buf_size) {
+            audio_size = audio_decode_frame(is);
+            if (audio_size < 0) {
+                is->audio_buf = NULL;
+                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+            }else {
+                update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
+                is->audio_buf_size = audio_size;
+            }
+            is->audio_buf_index = 0;
+        }
+        len1 = is->audio_buf_size - is->audio_buf_index;
+    }
+    if (len1 > len) {
+        if (is->audio_buf) {
+            memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
+        }else {
+            memset(stream, 0, len1);
+            if (is->audio_buf) {
+                SDL_MixAudioFormat(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, AUDIO_S16SYS, len1, 100);
+            }
+        }
+        len -= len1;
+        stream += len1;
+        is->audio_buf_index = len1;
+    }
+    is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+    if (!isnan(is->audio_clock)) {
+        double ptg_t = is->audio_clock - (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec;
+        int serial_t = is->audio_clock_serial;
+        double time_t = audio_callback_time / 1000000.0;
+        set_clock_at(&is->audclk, ptg_t, serial_t, time_t);
+        sync_clock_to_slave(&is->extclk, &is->audclk);
+    }
+}
+
+void HHVideoPlayer::sync_clock_to_slave(Clock *c, Clock *slave) {
+    double clock = get_clock(c); // 时钟（Clock）与从时钟（slave）同步的函数
+    double slave_clock = get_clock(slave);
+    if (!isnan(slave_clock) && (isnan(clock) || fabs(clock - slave_clock) > AV_NOSYNC_THRESHOLD))
+        set_clock(c, slave_clock, slave->serial);
+}
+
+double HHVideoPlayer::get_clock(Clock *c) { // 该函数的作用是获取一个时钟的当前时间
+    if (*c->queue_serial != c->serial)
+        return NAN;
+    if (c->paused) {
+        return c->pts;
+    } else {
+        double time = av_gettime_relative() / 1000000.0;
+        return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed);
+    }
+}
+
+int HHVideoPlayer::audio_decode_frame(VideoState *is) {
+    int data_size, resampled_data_size;
+    int64_t dec_channel_layout;
+    av_unused double audio_clock0;
+    int wanted_nb_samples;
+    Frame *af;
+    
+    data_size = 100;//av_samples_get_buffer_size(NULL, af->frame->channels, af->frame->nb_samples, af->frame->format, 1);
+    dec_channel_layout = (af->frame->channel_layout && af->frame->channels == av_get_channel_layout_nb_channels(af->frame->channel_layout)) ? af->frame->channel_layout : av_get_default_channel_layout(af->frame->channels);
+    wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples);
+    bool format_comp = af->frame->format != is->audio_src.fmt;
+    bool channel_comp = dec_channel_layout != is->audio_src.channel_layout;
+    bool sample_comp = af->frame->sample_rate != af->frame->nb_samples;
+    if ( format_comp || channel_comp|| (sample_comp && !is->swr_ctx)) {
+        swr_free(&is->swr_ctx);
+//        is->swr_ctx = swr_alloc_set_opts(NULL, is->audio_tgt.channel_layout, is->audio_tgt.fmt, is->audio_tgt.freq, dec_channel_layout, af->frame->format, af->frame->sample_rate, 0, NULL);
+        if (!is->swr_ctx || swr_init(is->swr_ctx) < 0) {
+            return -1;
+        }
+        is->audio_src.channel_layout = dec_channel_layout;
+        is->audio_src.channels = af->frame->channels;
+        is->audio_src.freq = af->frame->sample_rate;
+        is->audio_src.fmt = static_cast<AVSampleFormat>(af->frame->format);
+    }
+    if (is->swr_ctx) {
+        const uint8_t **in = (const uint8_t **)af->frame->extended_data;
+        uint8_t **out = &is->audio_buf1;
+        int out_cout = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate + 256;
+        int out_size = av_samples_get_buffer_size(NULL, is->audio_tgt.channels, out_cout, is->audio_tgt.fmt, 0);
+        int len2;
+        if (out_size < 0) {
+            av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size() failed\n");
+            return -1;
+        }
+        if (wanted_nb_samples != af->frame->nb_samples) {
+            int  sample_delta = (wanted_nb_samples - af->frame->nb_samples) * is->audio_tgt.freq / af->frame->sample_rate;
+            int compensation_distance = wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate;
+            if (swr_set_compensation(is->swr_ctx, sample_delta, compensation_distance) < 0) {
+                av_log(NULL, AV_LOG_ERROR, "swr_set_compensation() failed\n");
+                return -1;
+            }
+        }
+        av_fast_malloc(&is->audio_buf1, &is->audio_buf_size, out_size);
+        if (!is->audio_buf1) {
+            return AVERROR(ENOMEM);
+        }
+        len2 = swr_convert(is->swr_ctx, out, out_cout, in, af->frame->nb_samples);
+        if (len2 < 0) {
+            av_log(NULL, AV_LOG_ERROR, "swr_convert() failed\n");
+            return -1;
+        }
+        if (len2 == out_cout) {
+            av_log(NULL, AV_LOG_WARNING, "audio buffer is probably too small\n");
+            if (swr_init(is->swr_ctx) < 0) {
+                swr_free(&is->swr_ctx);
+            }
+        }
+        is->audio_buf = is->audio_buf1;
+        resampled_data_size = len2 * is->audio_tgt.channels *av_get_bytes_per_sample(is->audio_tgt.fmt);
+    }else {
+        is->audio_buf = af->frame->data[0];
+        resampled_data_size = data_size;
+    }
+    audio_clock0 = is->audio_clock;
+    if (!isnan(af->pts)) {
+        is->audio_clock = af->pts + (double)af->frame->nb_samples / af->frame->sample_rate;
+    }else {
+        is->audio_clock = NAN;
+    }
+    is->audio_clock_serial = af->serial;
+    return resampled_data_size;
+}
+
+void HHVideoPlayer::update_sample_display(VideoState *is, short *samples, int samples_size) {
+//    int size, len;
+//    size = samples_size / sizeof(short);
+//    while (size > 0) {
+//        len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
+//        if (len > size)
+//            len = size;
+//        memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(short));
+//        samples += len;
+//        is->sample_array_index += len;
+//        if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
+//            is->sample_array_index = 0;
+//        size -= len;
+//    }
+}
+
+int HHVideoPlayer::synchronize_audio(VideoState *is, int nb_samples) {
+    
+
+    return 1;
+}

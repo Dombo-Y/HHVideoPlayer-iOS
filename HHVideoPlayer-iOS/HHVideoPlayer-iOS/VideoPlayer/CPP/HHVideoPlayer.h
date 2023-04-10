@@ -76,5 +76,11 @@ private:
     void init_clock(Clock *c, int *queue_serial);
     int stream_component_openA(VideoState *tis, int stream_index);
      
+    void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
+    int audio_decode_frame(VideoState *is);
+    void update_sample_display(VideoState *is, short *samples, int samples_size);
+    int synchronize_audio(VideoState *is, int nb_samples);
+    void sync_clock_to_slave(Clock *c, Clock *slave);
+    double get_clock(Clock *c);
 };
 #endif /* HHVideoPlayer_hpp */
