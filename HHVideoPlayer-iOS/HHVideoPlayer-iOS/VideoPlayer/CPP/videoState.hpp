@@ -218,12 +218,20 @@ typedef struct VideoState {
     HHVideoState state = Stopped;
     int seekTime = -1;
        
+    
+    double frame_timer; // 视频帧计时器
+    double frame_last_returned_time; // 上一次返回帧的时间
+    double frame_last_filter_delay; // 上一次滤镜延迟的时间
+    
+    int frame_drops_early; // 丢弃的早期帧数
+    int frame_drops_late; // 丢弃的后期帧数
+    
 //    SwrContext *_aSwrCtx = nullptr;    //音频重采样上下文
 //    AudioSwrSpec _aSwrInSpec,_aSwrOutSpec;   //音频重采样输入/输出参数
 //    struct AudioParams audio_src; // 音频解码前的参数
 //    struct AudioParams audio_tgt;// 音频解码后的参数
     AVFrame *_aSwrInFrame = nullptr,*_aSwrOutFrame = nullptr;   //存放解码后的音频重采样输入/输出数据
-
+    
 }VideoState;
 
 #endif /* videoState_hpp */

@@ -24,6 +24,7 @@
 
 static int64_t audio_callback_time;
 
+static int framedrop = -1;
 static AVPacket flush_pkt;
 
 int readFile(void *arg) {
@@ -482,8 +483,98 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
 //}
 
 
-int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
-//    int ret = AVERROR(EAGAIN);
+int HHVideoPlayer::decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
+    int ret = AVERROR(EAGAIN);
+    
+    cout<< "   decoder_decode_frame~~~~~   " <<endl;
+    
+    for (; ; ) {
+        AVPacket pkt;
+        if (d->queue->serial == d->pkt_serial) {
+            do {
+                if (d->queue->abort_request) {
+                    return -1;
+                }
+                switch (d->avctx->codec_type) { //
+                    case AVMEDIA_TYPE_VIDEO: //
+                        ret = avcodec_receive_frame(d->avctx, frame);
+                        if (ret >= 0) {
+                            if (decoder_reorder_pts == -1) {
+                                frame->pts = frame->best_effort_timestamp;
+                            } else if (!decoder_reorder_pts) {
+                                frame->pts = frame->pkt_dts;
+                            }
+                        }
+                        break;
+                    case AVMEDIA_TYPE_AUDIO: //
+                        ret = avcodec_receive_frame(d->avctx, frame); //
+                        if (ret >= 0) {
+                            AVRational tb = (AVRational){1, frame->sample_rate};
+                            if (frame->pts != AV_NOPTS_VALUE)
+                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
+                            else if (d->next_pts != AV_NOPTS_VALUE)
+                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
+                            if (frame->pts != AV_NOPTS_VALUE) {
+                                d->next_pts = frame->pts + frame->nb_samples;
+                                d->next_pts_tb = tb;
+                            }
+                        }
+                        break;
+                }
+                if (ret == AVERROR_EOF) { // AVERROR_EOF表示解码器已经解码完毕。
+                    d->finished = d->pkt_serial;
+                    avcodec_flush_buffers(d->avctx); // 如果当前包是一个flush包，则调用avcodec_flush_buffers()函数清空解码器的缓冲区，并重置时间戳等参数
+                    return 0;
+                }
+                if (ret >= 0)
+                    return 1;
+            } while (ret != AVERROR(EAGAIN));
+        }
+        
+        do { // 首先，它会检查packet队列中是否有待解码的数据包，如果队列中没有待解码的数据包，则会通过SDL_CondSignal函数发出一个信号，等待队列中有新的数据包加入
+            if (d->queue->nb_packets == 0)
+                SDL_CondSignal(d->empty_queue_cond);
+            if (d->packet_pending) { // 如果队列中有数据包，它会检查是否有未解码的packet数据包，如果有，则将其移动到pkt变量中，并将packet_pending标志位设置为0
+                av_packet_move_ref(&pkt, &d->pkt);
+                d->packet_pending = 0;
+            } else { // 如果队列中没有未解码的packet数据包，则使用packet_queue_get函数从队列中获取一个packet数据包
+                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0)
+                    return -1;
+            }
+            if (d->queue->serial == d->pkt_serial)
+                break;
+            av_packet_unref(&pkt);
+        } while (1);
+        
+        if (pkt.data == flush_pkt.data) {
+            avcodec_flush_buffers(d->avctx);
+            d->finished = 0;
+            d->next_pts = d->start_pts;
+            d->next_pts_tb = d->start_pts_tb;
+        } else { // 如果读入的pkt不是flush_pkt数据包，则根据解码器的类型进行不同的解码操作
+            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) { // 如果是字幕解码器
+                int got_frame = 0;
+                ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, &pkt); // 则调用avcodec_decode_subtitle2函数进行字幕解码，并根据返回值设置ret的值
+                if (ret < 0) {// 如果got_frame为1且pkt.data为NULL，则将packet_pending标志位设置为1，将pkt数据包的引用移动到d->pkt中，并将ret的值设置为0
+                    ret = AVERROR(EAGAIN); // 否则将ret的值设置为AVERROR(EAGAIN)或AVERROR_EOF
+                } else {
+                    if (got_frame && !pkt.data) { //
+                        d->packet_pending = 1;
+                        av_packet_move_ref(&d->pkt, &pkt);
+                    }
+                    ret = got_frame ? 0 : (pkt.data ? AVERROR(EAGAIN) : AVERROR_EOF);
+                }
+            } else {
+                if (avcodec_send_packet(d->avctx, &pkt) == AVERROR(EAGAIN)) {// 如果是音频或视频解码器，则调用avcodec_send_packet函数将pkt数据包送入解码器进行解码
+                    av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+                    d->packet_pending = 1;// 并将pkt数据包的引用移动到d->pkt中，以便下一轮解码使用。如果返回值不为AVERROR(EAGAIN)，则根据解码结果设置ret的值。
+                    av_packet_move_ref(&d->pkt, &pkt); // 最后，使用av_packet_unref函数释放pkt数据包，避免内存泄漏。
+                   }
+               }
+               av_packet_unref(&pkt);
+           }
+    }
+    
 //    int send_ret = 0;
 //    int receive_ret = 0;
 //    int sendIndex = 0;
@@ -814,7 +905,7 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
             is->video_stream = stream_index;
             is->video_st = is->ic->streams[stream_index];
             decoder_init(&is->viddec, avctx, &is->videoq, is->continue_read_thread);
-            if ((ret = decoder_start(&is->viddec, video_thread, "video_decoder", is)) < 0)  {
+            if ((ret = decoder_start(&is->viddec, video_thread, "video_decoder", this)) < 0)  {
                 return ret;
             }
         }
@@ -840,37 +931,67 @@ int HHVideoPlayer::decoder_start(Decoder *d, int (*fn)(void *), const char *thre
     }
     return 0;
 }
+ 
+int get_video_frame(VideoState *is, AVFrame *frame, void *arg) {
+    HHVideoPlayer *player = (HHVideoPlayer *)arg;
+    VideoState *is_t = player->is; //(VideoState *)arg;
+     
+    int got_picture;
+    if ((got_picture = player->decoder_decode_frame(&is->viddec, frame, NULL)) < 0) {
+        return -1;
+    }
+    
+    if (got_picture) {
+        double dpts = NAN;
+        if (frame->pts != AV_NOPTS_VALUE){
+            dpts = av_q2d(is->video_st->time_base) * frame->pts;
+        }
+        frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
+        if (framedrop>0 || (framedrop && player->get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) {
+            if (frame->pts != AV_NOPTS_VALUE) {
+                double diff = dpts -  player->get_master_clock(is);
+                if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
+                    diff - is->frame_last_filter_delay < 0 &&
+                    is->viddec.pkt_serial == is->vidclk.serial &&
+                    is->videoq.nb_packets) {
+                    is->frame_drops_early++;
+                    av_frame_unref(frame);
+                    got_picture = 0;
+                }
+            }
+        }
+    }
+    return got_picture;
+}
 
 int HHVideoPlayer::video_thread(void *arg) {
-    VideoState *is = (VideoState *)arg;
+    HHVideoPlayer *player = (HHVideoPlayer *)arg;
+    VideoState *is_t = player->is; //(VideoState *)arg;
     AVFrame *frame = av_frame_alloc();
     double pts;
     double duration;
     int ret;
-    AVRational tb = is->video_st->time_base;
-    AVRational frame_rate = av_guess_frame_rate(is->ic, is->video_st, NULL);
+    AVRational tb = is_t->video_st->time_base;
+    AVRational frame_rate = av_guess_frame_rate(is_t->ic, is_t->video_st, NULL);
     
     if (!frame)
           return AVERROR(ENOMEM);
 
-    cout<< " 读取视频帧～～～～～～～"<<endl;
       for (;;) {
-//          ret = get_video_frame(is, frame);
-//          if (ret < 0){ }
-//              goto the_end;
-//          if (!ret)
-//              continue;
-//          duration = (frame_rate.num && frame_rate.den ? av_q2d((AVRational){frame_rate.den, frame_rate.num}) : 0);
-//          pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
-//          ret = queue_picture(is, frame, pts, duration, frame->pkt_pos, is->viddec.pkt_serial);
-//          av_frame_unref(frame);
+          cout<< " 读取视频帧～～～～～～～"<<endl;
+          ret = get_video_frame(is_t, frame, player);
+          if (ret < 0){
+              cout<< " 读取视频帧❌～"<<endl;
+          }
+          if (!ret)
+              continue;
+          duration = (frame_rate.num && frame_rate.den ? av_q2d((AVRational){frame_rate.den, frame_rate.num}) : 0);
+          pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+            
+          ret = player->queue_picture(is_t, frame, pts, duration, frame->pkt_pos, is_t->viddec.pkt_serial);
+          av_frame_unref(frame);
       }
     return 0;
-}
-
-int HHVideoPlayer::get_video_frame(VideoState *is, AVFrame *frame) {
-    
-    return 1;
 }
 
 int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params) {
@@ -935,6 +1056,32 @@ int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int w
         return -1;
     }
     return spec.size;
+}
+
+
+int HHVideoPlayer::queue_picture(VideoState *is, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial) {
+    Frame *vp;
+    if (!(vp = frame_queue_peek_writable(&is->pictq)))
+          return -1;
+
+    vp->sar = src_frame->sample_aspect_ratio;
+    vp->uploaded = 0;
+    
+    vp->width = src_frame->width;
+    vp->height = src_frame->height;
+    vp->format = src_frame->format;
+
+    vp->pts = pts;
+    vp->duration = duration;
+    vp->pos = pos;
+    vp->serial = serial;
+
+//    set_default_window_size(vp->width, vp->height, vp->sar); ///这里需要重新设置～～～·
+
+    av_frame_move_ref(vp->frame, src_frame);
+    frame_queue_push(&is->pictq);
+    
+    return 0;
 }
 
 #pragma mark  - Addddddddddddd

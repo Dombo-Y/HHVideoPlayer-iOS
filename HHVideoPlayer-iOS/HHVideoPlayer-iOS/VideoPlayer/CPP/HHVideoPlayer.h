@@ -34,8 +34,14 @@ public:
     void setSelf(void *self);
     void *self;
     
-private:
     VideoState *is;
+    
+    int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub); 
+    int get_master_sync_type(VideoState *is);
+    
+    double get_master_clock(VideoState *is);
+    
+private:
     SwrContext *aSwrCtx = nullptr;
     char _filename[512];    /* 文件名 */
     void playerfree();
@@ -84,8 +90,6 @@ private:
     void sync_clock_to_slave(Clock *c, Clock *slave);
     double get_clock(Clock *c);
     
-    double get_master_clock(VideoState *is);
-    int get_master_sync_type(VideoState *is);
     void frame_queue_next(FrameQueue *f);
     
     int initSDL();
@@ -107,7 +111,7 @@ private:
     static void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
     int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg);
     static int video_thread(void *arg);
-   
-    int get_video_frame(VideoState *is, AVFrame *frame);
+    
+    int queue_picture(VideoState *is, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial);
 };
 #endif /* HHVideoPlayer_hpp */
