@@ -105,5 +105,9 @@ private:
     void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes);
     int frame_queue_nb_remaining(FrameQueue *f);
     static void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
+    int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg);
+    static int video_thread(void *arg);
+   
+    int get_video_frame(VideoState *is, AVFrame *frame);
 };
 #endif /* HHVideoPlayer_hpp */
