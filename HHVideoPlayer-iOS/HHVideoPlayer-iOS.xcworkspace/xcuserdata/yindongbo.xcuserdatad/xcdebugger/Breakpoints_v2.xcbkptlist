@@ -14,8 +14,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "940"
-            endingLineNumber = "940"
+            startingLineNumber = "929"
+            endingLineNumber = "929"
             landmarkName = "get_video_frame(is, frame, arg)"
             landmarkType = "9">
          </BreakpointContent>
@@ -30,8 +30,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "542"
-            endingLineNumber = "542"
+            startingLineNumber = "531"
+            endingLineNumber = "531"
             landmarkName = "HHVideoPlayer::decoder_decode_frame(d, frame, sub)"
             landmarkType = "7">
          </BreakpointContent>
@@ -46,8 +46,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "957"
-            endingLineNumber = "957"
+            startingLineNumber = "946"
+            endingLineNumber = "946"
             landmarkName = "get_video_frame(is, frame, arg)"
             landmarkType = "9">
          </BreakpointContent>
@@ -62,8 +62,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "983"
-            endingLineNumber = "983"
+            startingLineNumber = "972"
+            endingLineNumber = "972"
             landmarkName = "HHVideoPlayer::video_thread(arg)"
             landmarkType = "7">
          </BreakpointContent>
@@ -78,10 +78,10 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1077"
-            endingLineNumber = "1077"
-            landmarkName = "HHVideoPlayer::queue_picture(is, src_frame, pts, duration, pos, serial)"
-            landmarkType = "7">
+            startingLineNumber = "1066"
+            endingLineNumber = "1066"
+            landmarkName = "unknown"
+            landmarkType = "0">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -94,8 +94,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "641"
-            endingLineNumber = "641"
+            startingLineNumber = "630"
+            endingLineNumber = "630"
             landmarkName = "frame_queue_push(f)"
             landmarkType = "9">
          </BreakpointContent>
@@ -110,9 +110,41 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "530"
-            endingLineNumber = "530"
+            startingLineNumber = "519"
+            endingLineNumber = "519"
             landmarkName = "HHVideoPlayer::decoder_decode_frame(d, frame, sub)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5D4B4704-1DD7-41E9-9811-FF04DF416BA1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "243"
+            endingLineNumber = "243"
+            landmarkName = "HHVideoPlayer::readFile()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8CC9544A-BF8A-4712-9BEB-3BD486FBF24B"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "889"
+            endingLineNumber = "889"
+            landmarkName = "HHVideoPlayer::stream_component_open(tis, stream_index)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

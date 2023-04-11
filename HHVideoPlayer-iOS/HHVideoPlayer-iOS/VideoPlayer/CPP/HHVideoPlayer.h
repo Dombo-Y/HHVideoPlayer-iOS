@@ -7,13 +7,13 @@
 
 #ifndef HHVideoPlayer_h
 #define HHVideoPlayer_h
-#include <stdio.h> 
-#include <libswresample/swresample.h>
+
 #include "videoState.hpp"
 
+#include "HHHeader.h"
+
 class HHVideoPlayer {
-public:
-     
+public: 
     HHVideoPlayer();
     ~HHVideoPlayer();
     

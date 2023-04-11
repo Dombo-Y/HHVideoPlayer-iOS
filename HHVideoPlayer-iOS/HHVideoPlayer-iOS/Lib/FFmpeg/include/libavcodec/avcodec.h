@@ -107,7 +107,7 @@
  *   functions and process their output:
  *   - For decoding, call avcodec_receive_frame(). On success, it will return
  *     an AVFrame containing uncompressed audio or video data.
- *   - For encoding, call avcodec_receive_packet().On success, it will return
+ *   - For encoding, call avcodec_receive_packet(). On success, it will return
  *     an AVPacket with a compressed frame.
  *
  *   Repeat this call until it returns AVERROR(EAGAIN) or an error. The
@@ -619,7 +619,7 @@ typedef struct AVCodecContext {
      * MPEG-4: global headers (they can be in the bitstream or here)
      * The allocated memory should be AV_INPUT_BUFFER_PADDING_SIZE bytes larger
      * than extradata_size to avoid problems if it is read with the bitstream reader.
-     * The bytewise contents of extradata mustnot depend on the architecture or CPU endianness.
+     * The bytewise contents of extradata must not depend on the architecture or CPU endianness.
      * Must be allocated with the av_malloc() family of functions.
      * - encoding: Set/allocated/freed by libavcodec.
      * - decoding: Set/allocated/freed by user.

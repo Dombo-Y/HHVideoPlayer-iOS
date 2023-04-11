@@ -8,7 +8,7 @@
 #ifndef cmdutils_h
 #define cmdutils_h
 
-#include "HHPrefixHeader.pch"
+//#include "HHPrefixHeader.pch"
 #include <stdio.h>
 
 /**

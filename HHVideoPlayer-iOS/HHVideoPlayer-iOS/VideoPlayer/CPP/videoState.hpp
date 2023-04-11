@@ -7,23 +7,11 @@
 
 #ifndef videoState_hpp
 #define videoState_hpp
-
-#include <stdio.h>
-//#include "HHPrefixHeader.pch"
+#include "HHHeader.h"
+#include "MacroHeader.h"
 
 using namespace std;
-
-#define VIDEO_PICTURE_QUEUE_SIZE 3 // 视频帧缓冲队列的大小，即存储待显示的视频帧的数量。
-#define SUBPICTURE_QUEUE_SIZE 16 // 字幕缓冲队列的大小，即存储待显示的字幕数据的数量。
-#define SAMPLE_QUEUE_SIZE 9 // 音频采样缓冲队列的大小，即存储待播放的音频采样数据的数量。
-#define FRAME_QUEUE_SIZE FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
-
-#define MAX_QUEUE_SIZE (15 * 1024 * 1024) //表示音视频队列的最大大小。
-#define MIN_FRAMES 25 // 表示播放最少需要的帧数。
-#define AUDIO_DIFF_AVG_NB   20 // 表示用于计算平均音视频差异的音视频差异数量。
-
-#define SAMPLE_ARRAY_SIZE (8 * 65536) // 表示音频样本数组的大小
-
+ 
 enum {
     AV_SYNC_AUDIO_MASTER, /* default choice */ // 表示以音频作为主时钟进行同步，为默认选择。
     AV_SYNC_VIDEO_MASTER, // 表示以视频作为主时钟进行同步。
