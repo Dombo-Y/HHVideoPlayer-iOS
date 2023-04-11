@@ -155,6 +155,9 @@ typedef struct VideoState {
     
     int seek_req; // 是否需要跳转到媒体文件的某个位置
     int seek_flags; // 跳转的标识符
+    
+    int64_t seek_pos; // 跳转的绝对位置
+    int64_t seek_rel; // 相对跳转位置
      
     int16_t sample_array[SAMPLE_ARRAY_SIZE]; // 存储音频样本的数组
     int sample_array_index; // 音频样本数组中当前的索引值

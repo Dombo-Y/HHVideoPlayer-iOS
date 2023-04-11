@@ -25,7 +25,12 @@
 static int64_t audio_callback_time;
 
 static AVPacket flush_pkt;
- 
+
+int readFile(void *arg) {
+    
+    return 0;
+}
+
 void HHVideoPlayer::initVideoState() {
     VideoState *iv =  (VideoState *)av_malloc(sizeof(VideoState));
     int ret;
@@ -51,7 +56,6 @@ void HHVideoPlayer::initVideoState() {
     iv->audio_clock_serial = -1;
     
     iv->av_sync_type = av_sync_type;// 音频时钟同步
-   
     if (!iv->read_tid) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateThread(): %s\n", SDL_GetError());
     }
@@ -66,6 +70,7 @@ void HHVideoPlayer::setState(int state) {
 
 HHVideoPlayer::HHVideoPlayer() {
     printf("初始化～～～");
+    initSDL();
     initVideoState();
     
     av_init_packet(&flush_pkt);
@@ -82,13 +87,13 @@ void HHVideoPlayer::setSelf(void *aSelf) {
 
 #pragma mark - Init Method
 void HHVideoPlayer::initSwr() {
-//    is->_aSwrOutSpec.sampleRate = is->audioCodecCtx->sample_rate;
-//    is->_aSwrInSpec.sampleFmt = is->audioCodecCtx->sample_fmt;
-//    is->_aSwrInSpec.chLayout = static_cast<int>(is->audioCodecCtx->channel_layout);
-//    is->_aSwrInSpec.chs = is->audioCodecCtx->channels;
-//
-//    is->_aSwrOutSpec.sampleRate = SAMPLE_RATE;
-//    is->_aSwrOutSpec.sampleFmt = AV_SAMPLE_FMT_S16;
+    aSwrOutSpec.sampleRate = is->audioCodecCtx->sample_rate;
+    aSwrInSpec.sampleFmt = is->audioCodecCtx->sample_fmt;
+    aSwrInSpec.chLayout = static_cast<int>(is->audioCodecCtx->channel_layout);
+    aSwrInSpec.chs = is->audioCodecCtx->channels;
+
+    aSwrOutSpec.sampleRate = SAMPLE_RATE;
+    aSwrOutSpec.sampleFmt = AV_SAMPLE_FMT_S16;
 }
 
 bool HHVideoPlayer::initAudioInfo() {
@@ -113,31 +118,27 @@ bool HHVideoPlayer::initVideoInfo() {
 
 int HHVideoPlayer::initAudioSwr() {
    int ret = 0;
-//   int in_sample_rate = is->audioCodecCtx->sample_rate;   // 输入采样率
-//   AVSampleFormat in_sp_fmt = is->audioCodecCtx->sample_fmt;
-//   int in_channel_layout = is->audioCodecCtx->channel_layout;
-//   int in_channels = is->audioCodecCtx->channels;
-//
-//
-//   int outSampleRate = SAMPLE_RATE;    // 输出采样率
-//   int out_samplefmt= AV_SAMPLE_FMT_S16;
-//   int out_chLayout = AV_CH_LAYOUT_STEREO;
-//   int out_chs = av_get_channel_layout_nb_channels(is->audioCodecCtx->channel_layout);
-//   int out_bytesPerSampleFrame = out_chs * av_get_bytes_per_sample(is->audioCodecCtx->sample_fmt);
+   int in_sample_rate = is->audioCodecCtx->sample_rate;   // 输入采样率
+   AVSampleFormat in_sp_fmt = is->audioCodecCtx->sample_fmt;
+   int in_channel_layout = is->audioCodecCtx->channel_layout;
+   int in_channels = is->audioCodecCtx->channels;
+ 
+   int outSampleRate = SAMPLE_RATE;    // 输出采样率
+   int out_samplefmt= AV_SAMPLE_FMT_S16;
+   int out_chLayout = AV_CH_LAYOUT_STEREO;
+   int out_chs = av_get_channel_layout_nb_channels(is->audioCodecCtx->channel_layout);
+   int out_bytesPerSampleFrame = out_chs * av_get_bytes_per_sample(is->audioCodecCtx->sample_fmt);
    
-//   SwrContext *aSwrCtx = nullptr;    //音频重采样 
-//    swr_alloc_set_opts(aSwrCtx, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+   SwrContext *aSwrCtx = nullptr;    //音频重采样
    ret = swr_init(aSwrCtx);
-//    is->_aSwrInFrame = av_frame_alloc();
-//    is->_aSwrOutFrame = av_frame_alloc();
+    is->_aSwrInFrame = av_frame_alloc();
+    is->_aSwrOutFrame = av_frame_alloc();
 //    ret = av_samples_alloc(is->_aSwrOutFrame->data, is->_aSwrOutFrame->linesize, is->_aSwrOutSpec.chs, 4096, is->_aSwrOutSpec.sampleFmt, 1);
 //    swr_alloc_set_opts(aSwrCtx, out_chLayout, out_samplefmt, outSampleRate, in_channel_layout, in_sp_fmt, in_sample_rate, 0, nullptr);
-//    swr_alloc_set_opts(<#struct SwrContext *s#>, <#int64_t out_ch_layout#>, <#enum AVSampleFormat out_sample_fmt#>, <#int out_sample_rate#>, <#int64_t in_ch_layout#>, <#enum AVSampleFormat in_sample_fmt#>, <#int in_sample_rate#>, <#int log_offset#>, <#void *log_ctx#>)
-   //    av_samples_alloc(outFrame->data, outFrame->linesize, out_chs, 4096, out_samplefmt, 1);
+//       av_samples_alloc(outFrame->data, outFrame->linesize, out_chs, 4096, out_samplefmt, 1);
    return 0;
 }
-
-
+ 
 int HHVideoPlayer::initVideoSwr() { 
    return 0;
 }
@@ -188,6 +189,7 @@ int HHVideoPlayer::frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_si
 }
 
 #pragma mark -
+  
 void HHVideoPlayer::play() {
 //    if (is->state == Playing) return;;
     
@@ -203,9 +205,17 @@ void HHVideoPlayer::play() {
 //        setState(Playing);
 //    }
     
+    
 }
 
+
 void HHVideoPlayer::readFile() {
+    
+    AVPacket pkt1, *pkt = &pkt1;
+    int64_t stream_start_time;
+    int64_t pkt_ts;
+    int pkt_in_play_range = 0;
+    
     SDL_mutex *wait_mutex = SDL_CreateMutex();
     AVFormatContext *fmtCtx = is->ic;
     int ret = 0;
@@ -254,58 +264,163 @@ void HHVideoPlayer::readFile() {
     int audioCout = 0;
     int videoCout = 0 ;
     
-    while (is->state != Stopped) {
-//        int vSize = is->videoq.size;
-//        int aSize = is->audioq.size;
-//        if (vSize + aSize  > 500) {
-//            SDL_Delay(10);
-//            cout<< " 缓存满了～～～～ " << endl ;
-//            continue;; // 缓存足够大了就缓存
-//        }
-          
-        av_format_inject_global_side_data(is->ic);
-        ret = av_read_frame(is->ic, &aPacket);
+    
+    
+    for (;;) {
+        if (is->abort_request) {
+            break;
+        }
+        if (is->paused != is->last_paused) {
+            is->last_paused = is->paused;
+            if (is->paused) {
+                is->read_pause_return = av_read_pause(is->ic);
+            }else {
+                av_read_play(is->ic);
+            }
+        }
+        bool enoughtSize = is->audioq.size + is->videoq.size > MAX_QUEUE_SIZE; //总容量满了
+        bool enoughtPackets = stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq) && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq);// 帧满了 or 时间满了
+        if (infinite_buffer < 1 && (enoughtSize||enoughtPackets)) {
+            cout<< "～～～～等待等待等待～～～～～～～～～enoughtSize～～"<< enoughtSize <<"~~enoughtPackets:" << enoughtPackets << endl;
+            SDL_LockMutex(wait_mutex);
+            SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+            SDL_UnlockMutex(wait_mutex);
+            continue;
+        }
+        
+        if (!is->paused &&
+            (!is->audio_st || (is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0)) &&
+            (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
+//            if (loop != 1 && (!loop || --loop)) {
+//                stream_seek(is, start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
+//            } else if (autoexit) {
+//                ret = AVERROR_EOF;
+//                goto fail;
+//            }
+        }
+        
+        ret = av_read_frame(is->ic, pkt);
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(is->ic->pb)) && !is->eof) {
-                if (is->video_stream >= 0) {
+                if (is->video_stream >= 0)
                     packet_queue_put_nullpacket(&is->videoq, is->video_stream);
-                }
-                if (is->audio_stream >= 0) {
+                if (is->audio_stream >= 0)
                     packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
-                }
                 is->eof = 1;
-                cout << "读取到文件末尾了～～" << endl ;
-                stream_component_openA(is, is->audio_stream);
-                SDL_LockMutex(wait_mutex);
-                SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
-                SDL_UnlockMutex(wait_mutex);
-                continue;
             }
-        } else {
+            if (is->ic->pb && is->ic->pb->error)
+                break;
+            SDL_LockMutex(wait_mutex);
+            SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+            SDL_UnlockMutex(wait_mutex);
+        }else {
             is->eof = 0;
         }
-         
-        if (ret == 0) {
-            if (aPacket.stream_index == is->audio_stream) {
-                audioCout = audioCout + 1; 
-                addAudioPkt(&aPacket);
-                cout << &aPacket << "音频音频音频音频音频" << is->audioq.serial  << endl;
-            }else if (aPacket.stream_index == is->video_stream) {
-                videoCout = videoCout + 1;
-//                addVideoPkt(&aPacket);
-//                cout << &aPacket << "视频视频视频视频" << index  << endl;
-            }else {
-                av_packet_unref(&aPacket);
-            }
+        
+        stream_start_time = is->ic->streams[pkt->stream_index]->start_time;
+        pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
+        pkt_in_play_range = duration == AV_NOPTS_VALUE || (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) * av_q2d(is->ic->streams[pkt->stream_index]->time_base) - (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000 <= ((double)duration / 1000000);
+        if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
+            packet_queue_put(&is->audioq, pkt);
+            cout<< "给数据～～～～～～～～🍎" << endl;
+        } else if (pkt->stream_index == is->video_stream && pkt_in_play_range
+                   && !(is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+            packet_queue_put(&is->videoq, pkt);
+            cout<< "给数据～～～～～～～～🍊" << endl;
+        }  else {
+            av_packet_unref(pkt);
         }
     }
     
-    SDL_DestroyMutex(wait_mutex);
+//-=-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-=
+//    while (is->state != Stopped) {
+////        int vSize = is->videoq.size;
+////        int aSize = is->audioq.size;
+////        if (vSize + aSize  > 500) {
+////            SDL_Delay(10);
+////            cout<< " 缓存满了～～～～ " << endl ;
+////            continue;; // 缓存足够大了就缓存
+////        }
+//
+//        av_format_inject_global_side_data(is->ic);
+//        ret = av_read_frame(is->ic, &aPacket);
+//        if (ret < 0) {
+//            if ((ret == AVERROR_EOF || avio_feof(is->ic->pb)) && !is->eof) {
+//                if (is->video_stream >= 0) {
+//                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+//                }
+//                if (is->audio_stream >= 0) {
+//                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
+//                }
+//                is->eof = 1;
+//                cout << "读取到文件末尾了～～" << endl ;
+//                stream_component_openA(is, is->audio_stream);
+//                SDL_LockMutex(wait_mutex);
+//                SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+//                SDL_UnlockMutex(wait_mutex);
+//                continue;
+//            }
+//        } else {
+//            is->eof = 0;
+//        }
+//
+//        if (ret == 0) {
+//            if (aPacket.stream_index == is->audio_stream) {
+//                audioCout = audioCout + 1;
+//                addAudioPkt(&aPacket);
+//                cout << &aPacket << "音频音频音频音频音频" << is->audioq.serial  << endl;
+//            }else if (aPacket.stream_index == is->video_stream) {
+//                videoCout = videoCout + 1;
+////                addVideoPkt(&aPacket);
+////                cout << &aPacket << "视频视频视频视频" << index  << endl;
+//            }else {
+//                av_packet_unref(&aPacket);
+//            }
+//        }
+//    }
+    
+//    SDL_DestroyMutex(wait_mutex);
 }
 
 void HHVideoPlayer::setFilename(const char *filename) {
     memcpy(_filename,filename,strlen(filename) + 1);
     cout << _filename << endl;
+}
+
+/* seek in the stream */
+void HHVideoPlayer::stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes) { // 执行媒体流的跳转（seek）操作。
+    if (!is->seek_req) {
+        is->seek_pos = pos;
+        is->seek_rel = rel;
+        is->seek_flags &= ~AVSEEK_FLAG_BYTE;
+        if (seek_by_bytes)
+            is->seek_flags |= AVSEEK_FLAG_BYTE;
+        is->seek_req = 1;
+        SDL_CondSignal(is->continue_read_thread);
+    }
+}
+
+int HHVideoPlayer::frame_queue_nb_remaining(FrameQueue *f) { // 段代码用于获取帧队列（FrameQueue）中尚未读取的帧数
+    return f->size - f->rindex_shown;
+}
+
+
+int HHVideoPlayer::stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue) {
+    return stream_id < 0 ||
+           queue->abort_request ||
+           (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
+           queue->nb_packets > MIN_FRAMES && (!queue->duration || av_q2d(st->time_base) * queue->duration > 1.0);
+}
+
+int HHVideoPlayer::packet_queue_put(PacketQueue *q, AVPacket *pkt)
+{
+    int ret;
+    SDL_LockMutex(q->mutex);// 该函数会使用一个互斥锁来保证线程安全，然后调用 packet_queue_put_private 函数将数据包添加到队列中
+    ret = packet_queue_put_private(q, pkt);
+    SDL_UnlockMutex(q->mutex);
+    if (pkt != &flush_pkt && ret < 0) // 如果该函数返回负数，表示数据包添加失败，此时会将数据包的引用计数减一以释放资源。
+        av_packet_unref(pkt); // 判断 pkt != &flush_pkt 的条件是为了避免释放 flush_pkt 这个空数据包（其实是一种特殊的数据包，用于表示“清空队列”）
+    return ret;
 }
 
 static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial) {
@@ -526,7 +641,76 @@ the_end:
     return 0;
 }
 
-#pragma mark - open Method  
+#pragma mark - SDL
+int HHVideoPlayer::initSDL() {
+    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+        // 初始化失败
+        cout<< " SDL_INIT_AUDIO Error " <<endl;
+        return -1;
+    }
+    
+    SDL_SetMainReady();
+    SDL_AudioSpec spec;
+    spec.freq = 44100;
+    spec.format =  AUDIO_S16SYS;
+    spec.channels = 2;
+    spec.samples = 1024;
+    spec.userdata = this;
+    spec.callback = sdlAudioCallbackFunc;
+    spec.userdata = this;
+    if (SDL_OpenAudio(&spec, nullptr)) {
+        cout<< " SDL_OpenAudio Error " <<endl;
+        return  -1;
+    }
+    SDL_PauseAudio(0);
+    return 0;
+}
+
+void HHVideoPlayer::sdlAudioCallbackFunc(void *userdata, Uint8 *stream, int len) {
+    HHVideoPlayer *player = (HHVideoPlayer *)userdata;
+    player->sdlAudioCallback(stream, len);
+}
+
+void HHVideoPlayer::sdlAudioCallback(Uint8 *stream, int len) {
+    SDL_memset(stream, 0, len);
+    while (len > 0) {
+        if(aSwrOutIdx >= aSwrOutSize) {
+            aSwrOutSize = decodeAudio(); // 解码出来算大小
+            aSwrOutIdx = 0;
+            if (aSwrOutSize <= 0) {
+                aSwrOutSize = 1024; // 假定1024个字节
+                memset(aSwrOutFrame->data[0], 0, aSwrOutSize);
+            }
+        }
+        int fillLen = aSwrOutSize - aSwrOutIdx;
+        fillLen = std::min(fillLen,len);
+        int volumn = 100;
+        SDL_MixAudio(stream, aSwrOutFrame->data[0] + aSwrOutIdx, fillLen, volumn);
+        len -= fillLen;
+        stream += fillLen;
+        aSwrOutIdx = fillLen;
+    }
+}
+
+int HHVideoPlayer::decodeAudio() {
+    AVPacket pkt;
+    int ret = 0;
+    AVFrame *frame = av_frame_alloc();
+    
+    pkt = is->audioq.first_pkt->pkt;
+    MyAVPacketList *first_pkt = is->audioq.first_pkt;
+    MyAVPacketList *next = first_pkt->next;
+    pkt = first_pkt->pkt;
+    ret = avcodec_send_packet(is->audioCodecCtx, &pkt);
+    cout << "ret ==== "<< ret << endl;
+    ret = avcodec_receive_frame(is->audioCodecCtx, frame);
+    is->audioq.first_pkt = next;
+     
+    int64_t outSamples = av_rescale_rnd(SAMPLE_RATE, SAMPLES, SAMPLES, AV_ROUND_UP);
+    ret = swr_convert(is->swr_ctx, aSwrOutFrame->data, outSamples, (const uint8_t**)aSwrInFrame->data, aSwrInFrame->nb_samples);
+    return ret * aSwrOutSpec.bytesPerSampleFrame;
+}
+
 #pragma mark - Decoder 初始化～～～～
 int HHVideoPlayer::stream_component_openA(VideoState *tis, int stream_index) {
     cout<< " 开始读取数据～～～～ " <<endl;
@@ -674,13 +858,20 @@ void HHVideoPlayer::addVideoPkt(AVPacket *pkt) {
 }
 
 #pragma mark - Queue ------
-void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
+int HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     MyAVPacketList *pkt1;
     pkt1 = (MyAVPacketList *)av_malloc(sizeof(MyAVPacketList));
+    if (!pkt1) {
+        return -1;
+    }
     pkt1->pkt = *pkt;
     pkt1 -> next = NULL;
-    q->serial ++;
+    
+    if (pkt == &flush_pkt) {
+        q->serial++; //数据流序号
+    }
     pkt1->serial = is->audioq.serial;
+    
     if (!q->last_pkt) {
         q->first_pkt = pkt1;
     }else {
@@ -691,9 +882,11 @@ void HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     q->size += pkt1->pkt.size + sizeof(*pkt1);
     q->duration += pkt1->pkt.duration;
    
+    SDL_CondSignal(q->cond);
     if (pkt1->pkt.stream_index == 1) {
         cout<< "音频帧大小～～" << q->size <<"啊对对对对"<< "序号：" << q->serial <<endl;
     }
+    return 0;
 }
 
 int  HHVideoPlayer::packet_queue_put_nullpacket(PacketQueue *q, int stream_index) { //初始化一个空包
@@ -961,7 +1154,6 @@ int HHVideoPlayer::synchronize_audio(VideoState *is, int nb_samples) {
                 }
             }
         }
-        
     }else {
         is->audio_diff_avg_count = 0;
         is->audio_diff_cum = 0;

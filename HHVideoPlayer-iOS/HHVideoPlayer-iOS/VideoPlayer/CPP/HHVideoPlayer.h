@@ -32,7 +32,7 @@ public:
     bool isMute();
     void readFile();
     void setSelf(void *self);
-    void *self; 
+    void *self;
     
 private:
     VideoState *is;
@@ -51,10 +51,11 @@ private:
     
     void addAudioPkt(AVPacket *pkt);
     void addVideoPkt(AVPacket *pkt);
-    void packet_queue_put_private(PacketQueue *q, AVPacket *pkt);
+    int packet_queue_put_private(PacketQueue *q, AVPacket *pkt);
     
     int packet_queue_init(PacketQueue *q);
     
+    int packet_queue_put(PacketQueue *q, AVPacket *pkt);
     int packet_queue_put_nullpacket(PacketQueue *q, int stream_index);
     
     int stream_component_open(VideoState *tis, int stream_index);
@@ -86,5 +87,22 @@ private:
     double get_master_clock(VideoState *is);
     int get_master_sync_type(VideoState *is);
     void frame_queue_next(FrameQueue *f);
+    
+    int initSDL();
+    static void sdlAudioCallbackFunc(void *userdata, Uint8 *stream, int len);
+    void sdlAudioCallback(Uint8 *stream, int len);
+    
+    
+    int aSwrOutIdx = 0;
+    int aSwrOutSize = 0;     //音频重采样后输出的PCM数据大小
+    AVFrame *aSwrInFrame = nullptr,*aSwrOutFrame = nullptr;
+    AudioSwrSpec aSwrInSpec,aSwrOutSpec;   //音频重采样输入/输出参数
+    int decodeAudio();
+    
+//    static void read_thread(void *arg);
+    
+    int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue);
+    void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes);
+    int frame_queue_nb_remaining(FrameQueue *f); 
 };
 #endif /* HHVideoPlayer_hpp */
