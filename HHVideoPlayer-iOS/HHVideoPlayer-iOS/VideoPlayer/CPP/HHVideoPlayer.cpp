@@ -253,7 +253,7 @@ void HHVideoPlayer::readFile() {
     SDL_PauseAudio(0);
     
     if (is->haveAudio) {
-        stream_component_open(is, is->audio_stream);
+        stream_component_open(is, is->audio_stream); // 获取视频信息，初始化audio swr
     }
     
 //    if (is->haveVideo) {
@@ -643,26 +643,26 @@ the_end:
 
 #pragma mark - SDL
 int HHVideoPlayer::initSDL() {
-    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-        // 初始化失败
-        cout<< " SDL_INIT_AUDIO Error " <<endl;
-        return -1;
+    
+    int flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+    if (SDL_Init(flags)) { // 返回值不是0，就代表失败
+        cout << "SDL_Init Error ～～" << SDL_GetError() << endl;
     }
     
-    SDL_SetMainReady();
-    SDL_AudioSpec spec;
-    spec.freq = 44100;
-    spec.format =  AUDIO_S16SYS;
-    spec.channels = 2;
-    spec.samples = 1024;
-    spec.userdata = this;
-    spec.callback = sdlAudioCallbackFunc;
-    spec.userdata = this;
-    if (SDL_OpenAudio(&spec, nullptr)) {
-        cout<< " SDL_OpenAudio Error " <<endl;
-        return  -1;
-    }
-    SDL_PauseAudio(0);
+//    SDL_SetMainReady();
+//    SDL_AudioSpec spec;
+//    spec.freq = 44100;
+//    spec.format =  AUDIO_S16SYS;
+//    spec.channels = 2;
+//    spec.samples = 1024;
+//    spec.userdata = this;
+//    spec.callback = sdlAudioCallbackFunc;
+//    spec.userdata = this;
+//    if (SDL_OpenAudio(&spec, nullptr)) {
+//        cout<< " SDL_OpenAudio Error " <<endl;
+//        return  -1;
+//    }
+//    SDL_PauseAudio(0);
     return 0;
 }
 
@@ -771,8 +771,7 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
     if (stream_index <0 || stream_index >= ic->nb_streams) {
         return  -1;
     }
-    avctx = is->audioCodecCtx;//avcodec_alloc_context3(NULL);
-    ret = avcodec_open2(avctx, codec, nullptr);
+    avctx = is->audioCodecCtx;
     
     if (!avctx) {
         return AVERROR(ENOMEM);
@@ -796,33 +795,38 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
      
     is->eof = 0;
     
-    sample_rate    = avctx->sample_rate;
-    nb_channels    = avctx->channels;
-    channel_layout = avctx->channel_layout;
-    
-    SDL_AudioSpec wanted_spec , spec;
-    wanted_spec.channels = nb_channels;
-    wanted_spec.freq = sample_rate;
-    wanted_spec.format = AUDIO_S16SYS;
-    wanted_spec.silence = 0;
-    wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, 2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
-//    wanted_spec.callback =
-    wanted_spec.userdata = is;
+    sample_rate    = avctx->sample_rate;//采样率 48000
+    nb_channels    = avctx->channels; // 音频通道 2
+    channel_layout = avctx->channel_layout; // 音频声道布局3
+ 
     switch (avctx->codec_type) {
-        case AVMEDIA_TYPE_AUDIO: {
-            ret = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &spec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE);
-            cout<< "SDL_OpenAudioDevice~~~~~~" << ret << endl;
-//            ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt);
-//            cout << "audio_open---audio_open "<< ret << endl;
-//            // 不知何用～～～～～
-////            is->audio_hw_buf_size = ret;
-//            is->audio_src = is->audio_tgt;
-//            is->audio_buf_size = 0;
-//            is->audio_buf_index = 0;
-//            is->audio_stream = stream_index;
-//            is->audio_st = ic->streams[stream_index];
-//            // 不知何用～～～～～
-//            decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread); // Decoder 初始化
+        case AVMEDIA_TYPE_AUDIO: { 
+            ret = audio_open(is, channel_layout, nb_channels, sample_rate, &is->audio_tgt);
+//            if(ret < 0){ ///////////这个地方是要打开的～～～～～
+//                cout<< "audio_open  error" <<endl;
+//                return 0;
+//            }
+            is->audio_hw_buf_size = ret;
+            is->audio_src = is->audio_tgt;
+            is->audio_buf_size = 0;
+            is->audio_buf_index = 0;
+            is->audio_stream = stream_index;
+            is->audio_st = ic->streams[stream_index];
+            is->audio_diff_avg_coef = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
+            is->audio_diff_avg_count = 0;
+            is->audio_diff_threshold = (double)(is->audio_hw_buf_size) / is->audio_tgt.bytes_per_sec;
+            is->audio_stream = stream_index;
+            is->audio_st = ic->streams[stream_index];
+            decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread); // Decoder 初始化
+            if ((is->ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) && !is->ic->iformat->read_seek) {
+                is->auddec.start_pts = is->audio_st->start_time;
+                is->auddec.start_pts_tb = is->audio_st->time_base;
+            }
+            if ((ret = decoder_start(&is->auddec)) < 0) {
+                return ret;
+            }
+//                goto out;
+            SDL_PauseAudioDevice(0, 0);
 //            ret = decoder_start(&is->auddec);
 //#pragma mark 解码解码解码
             
@@ -843,6 +847,70 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
     return ret;
 }
 
+
+int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params) {
+    SDL_AudioSpec wanted_spec, spec;
+    static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
+    static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
+    int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
+    
+    wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
+   
+    if (!wanted_channel_layout || wanted_nb_channels != av_get_channel_layout_nb_channels(wanted_channel_layout)) {
+        wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
+        wanted_channel_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
+    }
+    wanted_nb_channels = av_get_channel_layout_nb_channels(wanted_channel_layout);
+    wanted_spec.channels = wanted_nb_channels;
+    wanted_spec.freq = wanted_sample_rate;
+    
+    while (next_sample_rate_idx && next_sample_rates[next_sample_rate_idx] >= wanted_spec.freq)
+        next_sample_rate_idx--;
+    
+    wanted_spec.format = AUDIO_S16SYS;
+    wanted_spec.silence = 0;
+    wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, 2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
+    wanted_spec.callback = sdl_audio_callback;
+    wanted_spec.userdata = opaque;
+    
+    while (!(SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &spec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE))) {
+        av_log(NULL, AV_LOG_WARNING, "SDL_OpenAudio (%d channels, %d Hz): %s\n",
+               wanted_spec.channels, wanted_spec.freq, SDL_GetError());
+        wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
+        if (!wanted_spec.channels) {
+            wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
+            wanted_spec.channels = wanted_nb_channels;
+            if (!wanted_spec.freq) {
+                av_log(NULL, AV_LOG_ERROR,
+                       "No more combinations to try, audio open failed\n");
+                return -1;
+            }
+        }
+        wanted_channel_layout = av_get_default_channel_layout(wanted_spec.channels);
+     }
+    
+    if (spec.format != AUDIO_S16SYS) {
+        return -1;
+    }
+    if (spec.channels != wanted_spec.channels) {
+        wanted_channel_layout = av_get_default_channel_layout(spec.channels);
+        if (!wanted_channel_layout) {
+            return -1;
+        }
+    }
+    
+    audio_hw_params->fmt = AV_SAMPLE_FMT_S16;
+    audio_hw_params->freq = spec.freq;
+    audio_hw_params->channel_layout = wanted_channel_layout;
+    audio_hw_params->channels =  spec.channels;
+    audio_hw_params->frame_size = av_samples_get_buffer_size(NULL, audio_hw_params->channels, 1, audio_hw_params->fmt, 1);
+    audio_hw_params->bytes_per_sec = av_samples_get_buffer_size(NULL, audio_hw_params->channels, audio_hw_params->freq, audio_hw_params->fmt, 1);
+    if (audio_hw_params->bytes_per_sec <= 0 || audio_hw_params->frame_size <= 0) {
+        av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size failed\n");
+        return -1;
+    }
+    return spec.size;
+}
 
 #pragma mark  - Addddddddddddd
 void HHVideoPlayer::addAudioPkt(AVPacket *pkt) {
@@ -941,42 +1009,42 @@ void HHVideoPlayer::sdl_audio_callback(void *opaque, Uint8 *stream, int len) {
     VideoState *is_t = (VideoState *)opaque;
     int audio_size, len1;
     audio_callback_time = av_gettime_relative();
-    
-    while (len > 0) {
-        if (is->audio_buf_index >= is->audio_buf_size) {
-            audio_size = audio_decode_frame(is);
-            if (audio_size < 0) {
-                is->audio_buf = NULL;
-                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
-            }else {
-                update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
-                is->audio_buf_size = audio_size;
-            }
-            is->audio_buf_index = 0;
-        }
-        len1 = is->audio_buf_size - is->audio_buf_index;
-    }
-    if (len1 > len) {
-        if (is->audio_buf) {
-            memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
-        }else {
-            memset(stream, 0, len1);
-            if (is->audio_buf) {
-                SDL_MixAudioFormat(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, AUDIO_S16SYS, len1, 100);
-            }
-        }
-        len -= len1;
-        stream += len1;
-        is->audio_buf_index = len1;
-    }
-    is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
-    if (!isnan(is->audio_clock)) {
-        double ptg_t = is->audio_clock - (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec;
-        int serial_t = is->audio_clock_serial;
-        double time_t = audio_callback_time / 1000000.0;
-        set_clock_at(&is->audclk, ptg_t, serial_t, time_t);
-        sync_clock_to_slave(&is->extclk, &is->audclk);
-    }
+
+//    while (len > 0) {
+//        if (is->audio_buf_index >= is->audio_buf_size) {
+//            audio_size = audio_decode_frame(is);
+//            if (audio_size < 0) {
+//                is->audio_buf = NULL;
+//                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+//            }else {
+//                update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
+//                is->audio_buf_size = audio_size;
+//            }
+//            is->audio_buf_index = 0;
+//        }
+//        len1 = is->audio_buf_size - is->audio_buf_index;
+//    }
+//    if (len1 > len) {
+//        if (is->audio_buf) {
+//            memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
+//        }else {
+//            memset(stream, 0, len1);
+//            if (is->audio_buf) {
+//                SDL_MixAudioFormat(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, AUDIO_S16SYS, len1, 100);
+//            }
+//        }
+//        len -= len1;
+//        stream += len1;
+//        is->audio_buf_index = len1;
+//    }
+//    is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+//    if (!isnan(is->audio_clock)) {
+//        double ptg_t = is->audio_clock - (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec;
+//        int serial_t = is->audio_clock_serial;
+//        double time_t = audio_callback_time / 1000000.0;
+//        set_clock_at(&is->audclk, ptg_t, serial_t, time_t);
+//        sync_clock_to_slave(&is->extclk, &is->audclk);
+//    }
 }
 
 void HHVideoPlayer::sync_clock_to_slave(Clock *c, Clock *slave) {

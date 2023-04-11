@@ -65,7 +65,7 @@ private:
     int decoder_start(Decoder *d);
     void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond);
     
-//    int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params);
+    int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params);
 //    int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub);
 //    int audio_thread(void *arg);
     
@@ -77,7 +77,7 @@ private:
     void init_clock(Clock *c, int *queue_serial);
     int stream_component_openA(VideoState *tis, int stream_index);
      
-    void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
+//    void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
     int audio_decode_frame(VideoState *is);
     void update_sample_display(VideoState *is, short *samples, int samples_size);
     int synchronize_audio(VideoState *is, int nb_samples);
@@ -103,6 +103,7 @@ private:
     
     int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue);
     void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes);
-    int frame_queue_nb_remaining(FrameQueue *f); 
+    int frame_queue_nb_remaining(FrameQueue *f);
+    static void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
 };
 #endif /* HHVideoPlayer_hpp */
