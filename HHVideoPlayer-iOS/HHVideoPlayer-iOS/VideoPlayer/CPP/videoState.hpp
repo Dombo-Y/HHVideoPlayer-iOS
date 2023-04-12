@@ -7,11 +7,40 @@
 
 #ifndef videoState_hpp
 #define videoState_hpp
-#include "HHHeader.h"
-#include "MacroHeader.h"
 
+#include <stdio.h>
+//#include "HHPrefixHeader.pch"
+//#include "HHHeader.h"
 using namespace std;
- 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <libavformat/avformat.h>//格式
+#include <libavutil/avutil.h>//工具
+#include <libavcodec/avcodec.h>//编码
+#include <libavutil/imgutils.h>
+#include <libswresample/swresample.h>//重采样
+#include <libswscale/swscale.h>//像素格式转换
+
+#include "SDL.h"
+
+#ifdef __cplusplus
+};
+#endif
+
+
+#define VIDEO_PICTURE_QUEUE_SIZE 3 // 视频帧缓冲队列的大小，即存储待显示的视频帧的数量。
+#define SUBPICTURE_QUEUE_SIZE 16 // 字幕缓冲队列的大小，即存储待显示的字幕数据的数量。
+#define SAMPLE_QUEUE_SIZE 9 // 音频采样缓冲队列的大小，即存储待播放的音频采样数据的数量。
+#define FRAME_QUEUE_SIZE FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
+
+#define MAX_QUEUE_SIZE (15 * 1024 * 1024) //表示音视频队列的最大大小。
+#define MIN_FRAMES 25 // 表示播放最少需要的帧数。
+#define AUDIO_DIFF_AVG_NB   20 // 表示用于计算平均音视频差异的音视频差异数量。
+
+#define SAMPLE_ARRAY_SIZE (8 * 65536) // 表示音频样本数组的大小
+
 enum {
     AV_SYNC_AUDIO_MASTER, /* default choice */ // 表示以音频作为主时钟进行同步，为默认选择。
     AV_SYNC_VIDEO_MASTER, // 表示以视频作为主时钟进行同步。
@@ -55,7 +84,7 @@ typedef struct PacketQueue {
     MyAVPacketList *first_pkt, *last_pkt;// 链表中第一个pkt和最后一个pkt
 //    AVFifo *pkt_list;
     int nb_packets; // 队列中数据包的数量
-    int size; // 队列中所有数据包的大小
+    int size;  
     int64_t duration;// 队列中的数据包总时长
     int abort_request;// 是否在终止数据包的读取和处理
     int serial;// 用于标识队列的顺序
@@ -138,7 +167,7 @@ typedef struct VideoState {
     
     int abort_request; // 是否终止媒体播放的请求
     int paused; // 是否暂停媒体播放
-    int last_paused; //  上一次暂停的时间 
+    int last_paused; //  上一次暂停的时间
     int read_pause_return; // 读取暂停的返回值
     
     int seek_req; // 是否需要跳转到媒体文件的某个位置
@@ -175,6 +204,7 @@ typedef struct VideoState {
     double audio_clock; // 音频时钟
     int eof; // : 判断是否已到达文件末尾
     int av_sync_type; // 音视频同步类型
+    int step; // 视频帧步长
     
     double max_frame_duration; // 视频帧的最大持续时间，超过了的设定值，应用程序应该将其忽略或者重新计算时间戳，以便更好地控制帧率和播放速度。
         

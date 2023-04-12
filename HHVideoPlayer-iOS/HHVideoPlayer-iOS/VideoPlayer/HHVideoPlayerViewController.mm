@@ -7,15 +7,20 @@
 
 #import "HHVideoPlayerViewController.h"
 #import "Masonry.h"
- 
-////#include "Videoplayer.h"
+
+//extern "C" {
+//#include "libavformat/avformat.h"
+//#include "libavcodec/avcodec.h"
+//#include "SDL_main.h"
+//}
+//#include "Videoplayer.h"
 #import "OpenGLView20.h"
-//#import "HHVideoPlayer.h"
+#import "HHVideoPlayer.h"
 
 @interface HHVideoPlayerViewController (){
-    OpenGLView20 *_myview;
+//    OpenGLView20 *_myview;
 //    VideoPlayer *_player;
-//    HHVideoPlayer *_hhPlayer;
+    HHVideoPlayer *_hhPlayer;
 }
 
 @property (nonatomic,copy)NSString * path;
@@ -50,8 +55,9 @@
 //    printf("ffmpeg版本:%s\n",s);
 //
 //    _player = new VideoPlayer();   //初始化播放器
-//    _hhPlayer = new HHVideoPlayer();
+    _hhPlayer = new HHVideoPlayer();
     _path = [[NSBundle mainBundle] pathForResource:@"output" ofType:@"mp4"]; //大文件
+     
 }
 
 - (UIView *)contentView {
@@ -152,6 +158,7 @@
         make.width.equalTo(self.view);
         make.height.mas_equalTo(@(self.view.frame.size.width * 0.75));
     }];
+    
     [self.renderView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.top.equalTo(self.videoView).mas_offset(@5);
         make.right.bottom.equalTo(self.videoView).mas_offset(@-5);
@@ -208,9 +215,9 @@
 ////        self->_player->readFile();
 //        self->_player->play();
         
-//        self->_hhPlayer->setSelf((__bridge void *)strongSelf);
-//        self->_hhPlayer->setFilename(filename);
-//        self->_hhPlayer->play();
+        self->_hhPlayer->setSelf((__bridge void *)strongSelf);
+        self->_hhPlayer->setFilename(filename);
+        self->_hhPlayer->play();
         
     });
 }
@@ -282,7 +289,7 @@ void stateChanged(void *hhObjectInstance) {
 -(void)initFinished {
 //    cout<< " method  ---  initFinished " << endl;
 }
-void initFinished(void *hhObjectInstance) {
+void initFinished(void *hhObjectInstance) { 
     dispatch_async(dispatch_get_main_queue(), ^{
         [(__bridge id)hhObjectInstance initFinished];
     });
@@ -299,7 +306,7 @@ void initFinished(void *hhObjectInstance) {
 #pragma mark 音视频播放音频时间变化
 void timeChanged(void *hhObjectInstance) {
     
-}
+} 
 
 #pragma mark 音视频播放失败
 void playFailed(void *hhObjectInstance) {
