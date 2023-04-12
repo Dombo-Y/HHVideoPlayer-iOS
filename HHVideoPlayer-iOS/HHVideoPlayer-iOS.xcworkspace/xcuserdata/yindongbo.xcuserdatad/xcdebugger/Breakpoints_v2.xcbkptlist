@@ -14,8 +14,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1412"
-            endingLineNumber = "1412"
+            startingLineNumber = "1414"
+            endingLineNumber = "1414"
             landmarkName = "HHVideoPlayer::synchronize_audio(is, nb_samples)"
             landmarkType = "7">
          </BreakpointContent>
@@ -30,8 +30,8 @@
             filePath = "HHVideoPlayer-iOS/VideoPlayer/CPP/HHVideoPlayer.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1216"
-            endingLineNumber = "1216"
+            startingLineNumber = "1218"
+            endingLineNumber = "1218"
             landmarkName = "HHVideoPlayer::sdl_audio_callback(opaque, stream, len)"
             landmarkType = "7">
          </BreakpointContent>

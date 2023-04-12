@@ -352,7 +352,7 @@ void HHVideoPlayer::readFile() {
         if (!is->paused &&
             (!is->audio_st || (is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0)) &&
             (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
-            cout<<" 哈哈哈哈哈哈哈哈哈哈哈哈哈   " <<endl;
+//            cout<<" 哈哈哈哈哈哈哈哈哈哈哈哈哈   " <<endl;
 //            if (loop != 1 && (!loop || --loop)) {
 //                stream_seek(is, start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
 //            } else if (autoexit) {
@@ -384,11 +384,11 @@ void HHVideoPlayer::readFile() {
         pkt_in_play_range = duration == AV_NOPTS_VALUE || (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) * av_q2d(is->ic->streams[pkt->stream_index]->time_base) - (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000 <= ((double)duration / 1000000);
         if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
             packet_queue_put(&is->audioq, pkt);
-            cout<< "给数据～～～～～～～～🍎" << endl;
+//            cout<< "给数据～～～～～～～～🍎" << endl;
         } else if (pkt->stream_index == is->video_stream && pkt_in_play_range
                    && !(is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
             packet_queue_put(&is->videoq, pkt);
-            cout<< "给数据～～～～～～～～🍊" << endl;
+//            cout<< "给数据～～～～～～～～🍊" << endl;
         }  else {
             av_packet_unref(pkt);
         }
@@ -517,7 +517,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
             q->nb_packets--;
             q->size -= pkt1->pkt.size + sizeof(*pkt1);
             q->duration -= pkt1->pkt.duration;
-            cout << "取出一个数据包～～时间: " << q->nb_packets <<"哈哈哈哈" << "时间" << endl;
+            cout << "取出一个数据包～～时间: " << q->nb_packets <<"哈哈哈哈" << endl;
             *pkt = pkt1->pkt;
             if (serial)
                 *serial = pkt1->serial;
@@ -1178,6 +1178,8 @@ int HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
     SDL_CondSignal(q->cond);
     if (pkt1->pkt.stream_index == 1) {
         cout<< "音频帧大小～～" << q->size <<"啊对对对对"<< "序号：" << q->serial <<endl;
+    }else if (pkt1->pkt.stream_index == 0) {
+        cout<< "视频帧大小～～" << q->size <<"啊错错错错"<< "序号：" << q->serial <<endl;
     }
     return 0;
 }
