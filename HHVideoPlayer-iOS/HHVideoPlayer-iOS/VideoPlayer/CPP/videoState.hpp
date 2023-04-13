@@ -64,54 +64,54 @@ typedef struct MyAVPacketList {
     AVPacket pkt;// 类型为AVPacket 的结构体，用于存储音视频数据包
     struct MyAVPacketList *next;
     int serial; //当前视频包的序列号
-}MyAVPacketList;
+}MyAVPacketList;// 用于存储AVPacket数据的链表结构体，主要用于PacketQueue的队列实现
 
 typedef struct Frame {
-    AVFrame *frame;//
-    int serial ; //frame 的序列号
-    double pts; // 帧的呈现时间戳
-    int64_t pos; // 帧在输入文件中的字节位置
-    double duration; // 帧的持续时间
-    int width;
-    int height;
-    int format;
-    AVRational sar;
-    int uploaded;
-    int flip_v;
-}Frame;
+    AVFrame *frame;//指向解码后的视频帧
+    int serial ; // 视频帧的序列号，用于与音频帧的序列号进行比较，以确保音视频同步
+    double pts; // 视频帧的显示时间戳（Presentation Time Stamp）
+    int64_t pos; // 视频帧的字节偏移量，用于seek时跳转到正确的位置
+    double duration; // 视频帧的持续时间
+    int width;// 视频帧的宽度
+    int height;// 视频帧的高度
+    int format; // 视频帧的像素格式
+    AVRational sar;// 视频帧的采样比例（Sample Aspect Ratio）
+    int uploaded; // 标志位，用于指示是否已上传到GPU，如果已经上传到GPU，则可以进行硬件加速渲染
+    int flip_v;// 标志位，用于指示是否需要在垂直方向上翻转视频帧，因为有些视频的存储方式与FFmpeg默认方式不同，导致视频帧需要翻转才能正常显示
+}Frame;// 用于存储视频帧的信息
 
 typedef struct PacketQueue {
-    MyAVPacketList *first_pkt, *last_pkt;// 链表中第一个pkt和最后一个pkt
+    MyAVPacketList *first_pkt, *last_pkt;// 这两个指针用于指向队列中第一个和最后一个AVPacket结构体的节点，以便快速插入和删除数据。
 //    AVFifo *pkt_list;
-    int nb_packets; // 队列中数据包的数量
-    int size;  
+    int nb_packets; // 队列中AVPacket的数量。
+    int size;   // 队列中AVPacket的总大小
     int64_t duration;// 队列中的数据包总时长
     int abort_request;// 是否在终止数据包的读取和处理
     int serial;// 用于标识队列的顺序
     SDL_mutex *mutex; // 互斥锁
     SDL_cond *cond;// 信号变量
-}PacketQueue;
+}PacketQueue; // 用于管理音频和视频帧的队列，该队列用于缓存尚未被处理的音视频帧，以便在适当的时候进行播放
 
 typedef struct FrameQueue {
-    Frame queue[FRAME_QUEUE_SIZE];
-    int rindex; // 待读取帧的下标
-    int windex; // 待写入帧的下标
-    int size; // 当前队列中的帧数
-    int max_size; // 队列的最大帧数
-    int keep_last; // 是否保留最后一帧，取值0或1
-    int rindex_shown; // 上一次读取的帧的下标
+    Frame queue[FRAME_QUEUE_SIZE]; //用于存储视频帧的数组
+    int rindex; // 队列中最早的视频帧的索引
+    int windex; // 队列中最新的视频帧的索引
+    int size; // 队列中视频帧的数量
+    int max_size; // 队列中视频帧的最大数量
+    int keep_last; // 标志位，用于指示是否需要保留最后一帧，取值0或1
+    int rindex_shown; // 队列中最早显示的视频帧的索引
     SDL_mutex *mutex; // 互斥锁
     SDL_cond *cond; // 条件变量
-    PacketQueue *pktq; // 待解码数据队列
-}FrameQueue;
+    PacketQueue *pktq; // 指向存储待显示AVPacket的PacketQueue队列
+}FrameQueue; // 用于管理视频帧的队列，该队列用于缓存尚未被显示的视频帧
 
 typedef struct {
-    int sampleRate;
-    AVSampleFormat sampleFmt;
-    int chLayout;
-    int chs;
+    int sampleRate; // 音频采样率
+    AVSampleFormat sampleFmt;// 音频样本格式。
+    int chLayout; // 音频通道布局。
+    int chs;// 音频通道数。
     //每一个样本帧(两个声道(左右声道))的大小
-    int bytesPerSampleFrame;
+    int bytesPerSampleFrame;// 每个音频样本帧（即一组采样数据）的大小，单位为字节
 } AudioSwrSpec;
 
 typedef struct Clock {
@@ -135,19 +135,19 @@ typedef struct AudioParams {
 
 
 typedef struct Decoder {
-    AVPacket pkt; // 存储待解码数据的包
-    PacketQueue *queue; // 用于存储待解码的包
-    AVCodecContext *avctx; // 表示该解码器的上下文信息
-    int pkt_serial; //包的序列号
-    int finished; // 是否完成解码，取值为0或1
-    int packet_pending; // 是否有包正在等待解码，取值为0或1
-    SDL_cond *empty_queue_cond; // 指向SDL_cond结构体对象的指针，用于线程之间的同步
-    int64_t start_pts; // 开始解码的时间戳
-    AVRational start_pts_tb; // 开始解码的时间戳对应的时间基（timebase）
+    AVPacket pkt; // 解码器当前处理的AVPacket结构体
+    PacketQueue *queue; // 指向存储待解码AVPacket的PacketQueue队列
+    AVCodecContext *avctx; // 解码器的上下文信息，包括解码器本身的相关信息和解码后的输出信息
+    int pkt_serial; //指示解码器处理的AVPacket结构体的序列号
+    int finished; // 标志位，用于指示解码是否完成
+    int packet_pending; // 标志位，用于指示是否有未处理的AVPacket，取值为0或1
+    SDL_cond *empty_queue_cond; // 用于等待和通知PacketQueue队列是否为空的条件变量，用于线程之间的同步
+    int64_t start_pts; // 解码器第一帧的PTS（Presentation Time Stamp），开始解码的时间戳
+    AVRational start_pts_tb; // 解码器第一帧的PTS时间基（Time Base），开始解码的时间戳对应的时间基（timebase）
     int64_t next_pts; // 下一帧数据的时间戳
     AVRational next_pts_tb; //  下一帧数据的时间戳对应的时间基
-    SDL_Thread *decoder_tid; // 解码线程的ID
-} Decoder;
+    SDL_Thread *decoder_tid; // 解码器所在线程的指针
+} Decoder; // 用于解码音频或视频帧
  
 typedef struct FrameData {
     int64_t pkt_pos;

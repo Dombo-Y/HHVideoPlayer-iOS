@@ -105,7 +105,7 @@ void HHVideoPlayer::setSelf(void *aSelf) {
 static void set_clock_at(Clock *c, double pts, int serial, double time) {
     c->pts = pts;
     c->last_updated = time;
-    c->pts_drift = c->pts - time;
+    c->pts_drift = c->pts - time; // 时钟时间便宜量
     c->serial = serial;
 }
 
@@ -335,19 +335,19 @@ void HHVideoPlayer::readFile() {
             is->seek_req = 0;
             is->eof = 0;
             if (is->paused)
-                step_to_next_frame(is);
+                step_to_next_frame(is);// 在视频暂停状态下，手动前进到下一帧图像
         }
         
         
-        bool enoughtSize = is->audioq.size + is->videoq.size > MAX_QUEUE_SIZE; //总容量满了
-        bool enoughtPackets = stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq) && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq);// 帧满了 or 时间满了
-        if (infinite_buffer < 1 && (enoughtSize||enoughtPackets)) {
-            cout<< "～～～～等待等待等待～～～～～～～～～enoughtSize～～"<< enoughtSize <<"~~enoughtPackets:" << enoughtPackets << endl;
-            SDL_LockMutex(wait_mutex);
-            SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
-            SDL_UnlockMutex(wait_mutex);
-            continue;
-        }
+//        bool enoughtSize = is->audioq.size + is->videoq.size > MAX_QUEUE_SIZE; //总容量满了
+//        bool enoughtPackets = stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq) && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq);// 帧满了 or 时间满了
+//        if (infinite_buffer < 1 && (enoughtSize||enoughtPackets)) {
+//            cout<< "～～～～等待等待等待～～～～～～～～～enoughtSize～～"<< enoughtSize <<"~~enoughtPackets:" << enoughtPackets << endl;
+//            SDL_LockMutex(wait_mutex);
+//            SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
+//            SDL_UnlockMutex(wait_mutex);
+//            continue;
+//        }
 
         if (!is->paused &&
             (!is->audio_st || (is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0)) &&
@@ -926,7 +926,6 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
             is->audio_src = is->audio_tgt;
             is->audio_buf_size = 0;
             is->audio_buf_index = 0;
-            is->audio_stream = stream_index;
             is->audio_st = ic->streams[stream_index];
             is->audio_diff_avg_coef = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
             is->audio_diff_avg_count = 0;
@@ -941,7 +940,7 @@ int HHVideoPlayer::stream_component_open(VideoState *tis, int stream_index) {
             if ((ret = decoder_start(&is->auddec)) < 0) {
                 return ret;
             }
-            SDL_PauseAudioDevice(0, 0);
+            SDL_PauseAudioDevice(0, 0); // 
 
         }
             break;
@@ -1029,10 +1028,10 @@ int HHVideoPlayer::video_thread(void *arg) {
           }
           if (!ret)
               continue;
-          duration = (frame_rate.num && frame_rate.den ? av_q2d((AVRational){frame_rate.den, frame_rate.num}) : 0);
-          pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+          duration = (frame_rate.num && frame_rate.den ? av_q2d((AVRational){frame_rate.den, frame_rate.num}) : 0);// 计算视频帧间隔时间的逻辑
+          pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);// 当前视频帧的显示时间戳
 
-          ret = player->queue_picture(is_t, frame, pts, duration, frame->pkt_pos, is_t->viddec.pkt_serial);
+          ret = player->queue_picture(is_t, frame, pts, duration, frame->pkt_pos, is_t->viddec.pkt_serial);//将解码后的视频帧加入播放队列
           av_frame_unref(frame);
       }
     return 0;
@@ -1083,6 +1082,7 @@ int HHVideoPlayer::audio_open(void *opaque, int64_t wanted_channel_layout, int w
 //        }
 //        wanted_channel_layout = av_get_default_channel_layout(wanted_spec.channels);
 //     }
+    
     if (SDL_OpenAudio(&wanted_spec, nullptr)) {
         cout << " No more combinations to try, audio open failed " << endl;
         return -1;
@@ -1120,7 +1120,7 @@ int HHVideoPlayer::queue_picture(VideoState *is, AVFrame *src_frame, double pts,
     vp->sar = src_frame->sample_aspect_ratio;
     vp->uploaded = 0;
 
-    vp->width = src_frame->width;
+    vp->width = src_frame->width; // 根据frame 解码后的帧 进行 width 和 height 设置UI
     vp->height = src_frame->height;
     vp->format = src_frame->format;
 
@@ -1177,9 +1177,9 @@ int HHVideoPlayer::packet_queue_put_private(PacketQueue *q, AVPacket *pkt) {
 
     SDL_CondSignal(q->cond);
     if (pkt1->pkt.stream_index == 1) {
-        cout<< "音频帧大小～～" << q->size <<"啊对对对对"<< "序号：" << q->serial <<endl;
+        cout<< "音频帧大小～～" << q->size <<"啊对对对对"<< "序号：" << q->duration <<endl;
     }else if (pkt1->pkt.stream_index == 0) {
-        cout<< "视频帧大小～～" << q->size <<"啊错错错错"<< "序号：" << q->serial <<endl;
+        cout<< "视频帧大小～～" << q->size <<"啊错错错错"<< "序号：" << q->duration <<endl;
     }
     return 0;
 }
@@ -1217,41 +1217,41 @@ void HHVideoPlayer::sdl_audio_callback(void *opaque, Uint8 *stream, int len) {
     int audio_size, len1;
     audio_callback_time = av_gettime_relative();
 // 音频回调回来，做的音视频同步 处理
-//    while (len > 0) {
-//        if (is->audio_buf_index >= is->audio_buf_size) {
-//            audio_size = audio_decode_frame(is);
-//            if (audio_size < 0) {
-//                is->audio_buf = NULL;
-//                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
-//            }else {
-//                update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
-//                is->audio_buf_size = audio_size;
+//        while (len > 0) {
+//            if (is->audio_buf_index >= is->audio_buf_size) {
+//                audio_size = audio_decode_frame(is);
+//                if (audio_size < 0) {
+//                    is->audio_buf = NULL;
+//                    is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+//                }else {
+//                    update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
+//                    is->audio_buf_size = audio_size;
+//                }
+//                is->audio_buf_index = 0;
 //            }
-//            is->audio_buf_index = 0;
+//            len1 = is->audio_buf_size - is->audio_buf_index;
 //        }
-//        len1 = is->audio_buf_size - is->audio_buf_index;
-//    }
-//    if (len1 > len) {
-//        if (is->audio_buf) {
-//            memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
-//        }else {
-//            memset(stream, 0, len1);
+//        if (len1 > len) {
 //            if (is->audio_buf) {
-//                SDL_MixAudioFormat(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, AUDIO_S16SYS, len1, 100);
+//                memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
+//            }else {
+//                memset(stream, 0, len1);
+//                if (is->audio_buf) {
+//                    SDL_MixAudioFormat(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, AUDIO_S16SYS, len1, 100);
+//                }
 //            }
+//            len -= len1;
+//            stream += len1;
+//            is->audio_buf_index = len1;
 //        }
-//        len -= len1;
-//        stream += len1;
-//        is->audio_buf_index = len1;
-//    }
-//    is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
-//    if (!isnan(is->audio_clock)) {
-//        double ptg_t = is->audio_clock - (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec;
-//        int serial_t = is->audio_clock_serial;
-//        double time_t = audio_callback_time / 1000000.0;
-//        set_clock_at(&is->audclk, ptg_t, serial_t, time_t);
-//        sync_clock_to_slave(&is->extclk, &is->audclk);
-//    }
+//        is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+//        if (!isnan(is->audio_clock)) {
+//            double ptg_t = is->audio_clock - (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec;
+//            int serial_t = is->audio_clock_serial;
+//            double time_t = audio_callback_time / 1000000.0;
+//            set_clock_at(&is->audclk, ptg_t, serial_t, time_t);
+//            sync_clock_to_slave(&is->extclk, &is->audclk);
+//        }
 }
 
 void HHVideoPlayer::sync_clock_to_slave(Clock *c, Clock *slave) {
@@ -1293,7 +1293,7 @@ int HHVideoPlayer::audio_decode_frame(VideoState *is) {
     int align = 1;
     data_size = av_samples_get_buffer_size(NULL, nb_channels, nb_samples, sample_fmt, 1);
     dec_channel_layout = (af->frame->channel_layout && af->frame->channels == av_get_channel_layout_nb_channels(af->frame->channel_layout)) ? af->frame->channel_layout : av_get_default_channel_layout(af->frame->channels);
-    wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples);
+    wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples); //音视频同步？？？
     bool format_comp = af->frame->format != is->audio_src.fmt;
     bool channel_comp = dec_channel_layout != is->audio_src.channel_layout;
     bool sample_comp = af->frame->sample_rate != af->frame->nb_samples;
@@ -1414,7 +1414,7 @@ int HHVideoPlayer::synchronize_audio(VideoState *is, int nb_samples) {
     if (get_master_sync_type(is) != AV_SYNC_AUDIO_MASTER) {
         double diff, avg_diff;
         int min_nb_samples, max_nb_samples;
-        diff = get_clock(&is->audclk) - get_master_clock(is);// 计算音频时钟和主时钟之间的差异
+        diff = get_clock(&is->audclk) - get_master_clock(is);// 音频时钟 - 主时钟
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
             is->audio_diff_cum = diff + is->audio_diff_avg_coef * is->audio_diff_cum;
             if (is->audio_diff_avg_count < AUDIO_DIFF_AVG_NB) {
@@ -1430,8 +1430,8 @@ int HHVideoPlayer::synchronize_audio(VideoState *is, int nb_samples) {
             }
         }
     }else {
-        is->audio_diff_avg_count = 0;
-        is->audio_diff_cum = 0;
+        is->audio_diff_avg_count = 0;// 将当前音频差异累积值清零
+        is->audio_diff_cum = 0; // 将音频差异平均值计数器重置为0
     }
 
     return wanted_nb_samples;
