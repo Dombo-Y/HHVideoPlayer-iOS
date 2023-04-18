@@ -1,0 +1,52 @@
+
+static const OptionDef options[] = {.....}
+
+CMDUTILS_COMMON_OPTIONS：在 cmdutils.h 中定义的一些通用命令行参数，如 -h、-v 等。
+-x：强制指定输出视频的宽度。
+-y：强制指定输出视频的高度。
+-s：设置视频帧大小，可以用“WxH”或缩写。
+-fs：强制全屏播放。
+-an：禁用音频。
+-vn：禁用视频。
+-sn：禁用字幕。
+-ast：选择特定的音频流。
+-vst：选择特定的视频流。
+-sst：选择特定的字幕流。
+-ss：从指定位置开始播放。
+-t：播放指定长度的音频或视频。
+-bytes：按字节定位。
+-seek_interval：设置快进/快退的时间间隔。
+-nodisp：禁用图形化显示。
+-noborder：无边框窗口。
+-alwaysontop：窗口始终置于顶层。
+-volume：设置启动音量。
+-f：强制指定格式。
+-pix_fmt：设置视频帧像素格式。
+-stats：显示状态信息。
+-fast：使用非标准兼容优化。
+-genpts：生成时间戳。
+-drp：让解码器重新排序时间戳。
+-lowres：降低分辨率。
+-sync：设置音频-视频同步类型。
+-autoexit：播放完成退出。
+-exitonkeydown：按下键盘退出。
+-exitonmousedown：鼠标点击退出。
+-loop：设置播放循环次数。
+-framedrop：CPU 过慢时丢帧。
+-infbuf：不限制输入缓冲区大小。
+-window_title：设置窗口标题。
+-left：设置窗口左侧位置。
+-top：设置窗口顶部位置。
+-vf：设置视频滤镜。
+-af：设置音频滤镜。
+-rdftspeed：设置 RDFT 速度。
+-showmode：选择显示模式。
+-default：通用选项。
+-i：读取指定的输入文件。
+-codec：指定解码器。
+-acodec：强制指定音频解码器。
+-scodec：强制指定字幕解码器。
+-vcodec：强制指定视频解码器。
+-autorotate：自动旋转视频。
+-find_stream_info：使用启发式方法读取和解码流以填充缺失信息。
+-filter_threads：图像过滤器线程数。

@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="1Lz-D3-sOb">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
+        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19519"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -43,6 +44,22 @@
             </objects>
             <point key="canvasLocation" x="649.27536231884062" y="174.77678571428569"/>
         </scene>
+        <!--Movie Main View Controller-->
+        <scene sceneID="10N-4o-kLz">
+            <objects>
+                <viewController id="JB3-23-Cer" customClass="KXMovieMainViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Nj9-5R-y7V">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="BeC-su-tGF"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="BSh-Ur-gcE"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Kcd-ct-qRd" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="713" y="871"/>
+        </scene>
         <!--Navigation Controller-->
         <scene sceneID="hcx-vx-TNA">
             <objects>
@@ -52,7 +69,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
-                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="ZDp-gM-nTa"/>
+                        <segue destination="JB3-23-Cer" kind="relationship" relationship="rootViewController" id="aJT-TK-Ecb"/>
                     </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cOW-4S-xhl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>

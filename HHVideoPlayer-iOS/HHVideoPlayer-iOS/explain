@@ -1,0 +1,298 @@
+方法列表 --------------------------------------------
+
+比较两种音频采样格式和声道数是否相同：
+static inline
+int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1,
+                   enum AVSampleFormat fmt2, int64_t channel_count2)
+
+获取一个有效的声道布局：
+static inline
+int64_t get_valid_channel_layout(int64_t channel_layout, int channels)
+
+向音视频解码器的PacketQueue中添加一个AVPacket数据包：
+static int packet_queue_put_private(PacketQueue *q, AVPacket *pkt)
+
+向音视频解码器的PacketQueue中添加一个AVPacket数据包：
+static int packet_queue_put(PacketQueue *q, AVPacket *pkt)
+
+向音视频解码器的PacketQueue中添加一个空的AVPacket数据包：
+static int packet_queue_put_nullpacket(PacketQueue *q, int stream_index)
+
+初始化音视频解码器的PacketQueue：
+static int packet_queue_init(PacketQueue *q)
+
+用于清空音视频解码器的PacketQueue中所有的数据包
+static void packet_queue_flush(PacketQueue *q)
+
+用于销毁音视频解码器的PacketQueue以及相关的数据结构：
+static void packet_queue_destroy(PacketQueue *q)
+
+用于中止音视频解码器的PacketQueue中的所有数据包
+static void packet_queue_abort(PacketQueue *q)
+
+用于启动音视频解码器的PacketQueue中的数据包的处理
+static void packet_queue_start(PacketQueue *q)
+
+用于从音视频解码器的PacketQueue中获取数据包
+static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial)
+
+用于初始化音视频解码器的Decoder结构体
+static void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond)
+
+用于解码音视频数据的函数 【核心 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀】
+static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub)
+
+用于销毁音视频解码器的函数
+static void decoder_destroy(Decoder *d)
+
+用于释放Frame类型变量vp
+static void frame_queue_unref_item(Frame *vp)
+
+用于初始化FrameQueue结构体的函数
+static int frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_size, int keep_last)
+
+用于销毁FrameQueue结构体的函数
+static void frame_queue_destory(FrameQueue *f)
+
+用于发送信号通知其他线程的函数
+static void frame_queue_signal(FrameQueue *f)
+
+用于获取FrameQueue队列中下一个待处理的Frame类型指针的函数
+static Frame *frame_queue_peek(FrameQueue *f)
+
+用于获取FrameQueue队列中下一个待显示的Frame类型指针的函数
+static Frame *frame_queue_peek_next(FrameQueue *f)
+
+用于获取FrameQueue队列中最后一帧Frame类型指针的函数
+static Frame *frame_queue_peek_last(FrameQueue *f)
+
+用于获取FrameQueue队列中下一个可写入的Frame类型指针的函数
+static Frame *frame_queue_peek_writable(FrameQueue *f)
+
+用于获取FrameQueue队列中下一个可读取的Frame类型指针的函数
+static Frame *frame_queue_peek_readable(FrameQueue *f)
+
+用于将FrameQueue队列中下一个待写入的Frame类型指针推入队列中的函数
+static void frame_queue_push(FrameQueue *f)
+
+是从 FrameQueue 中获取下一帧，并更新当前帧索引
+static void frame_queue_next(FrameQueue *f)
+
+获取 FrameQueue 中还未被读取的帧数
+static int frame_queue_nb_remaining(FrameQueue *f)
+
+获取 FrameQueue 中最后一个帧的位置
+static int64_t frame_queue_last_pos(FrameQueue *f)
+
+中止解码器 d，并清空帧队列 fq。
+static void decoder_abort(Decoder *d, FrameQueue *fq)
+
+用于在屏幕上绘制矩形
+static inline void fill_rectangle(int x, int y, int w, int h)
+
+用于重新分配SDL_Texture对象的内存空间
+static int realloc_texture(SDL_Texture **texture, Uint32 new_format, int new_width, int new_height, SDL_BlendMode blendmode, int init_texture)
+
+一个计算视频显示区域的函数
+static void calculate_display_rect(SDL_Rect *rect,
+                                   int scr_xleft, int scr_ytop, int scr_width, int scr_height,
+                                   int pic_width, int pic_height, AVRational pic_sar)
+                   
+用于根据给定的视频像素格式，获取相应的SDL像素格式和混合模式
+static void get_sdl_pix_fmt_and_blendmode(int format, Uint32 *sdl_pix_fmt, SDL_BlendMode *sdl_blendmode)
+
+upload_texture函数负责将AVFrame上传到SDL纹理
+static int upload_texture(SDL_Texture **tex, AVFrame *frame, struct SwsContext **img_convert_ctx)
+
+set_sdl_yuv_conversion_mode函数根据提供的AVFrame的属性设置SDL渲染的全局YUV到RGB转换模式
+static void set_sdl_yuv_conversion_mode(AVFrame *frame)
+
+video_image_display函数用于显示视频帧
+static void video_image_display(VideoState *is)
+
+使用此函数来计算循环缓冲区的当前索引
+static inline int compute_mod(int a, int b)
+
+在FFplay媒体播放器中为显示的视频播放音频
+static void video_audio_display(VideoState *s)
+
+关闭特定的音频或视频流。
+static void stream_component_close(VideoState *is, int stream_index)
+
+stream_close 是 FFmpeg 库中 ffplay 程序中的一个函数，负责关闭给定 VideoState 的视频和音频流。当程序退出或用户请求关闭当前文件时调用该函数
+static void stream_close(VideoState *is)
+
+用于退出程序并释放资源
+static void do_exit(VideoState *is)
+
+用于处理SIGTERM信号。SIGTERM是一个进程终止信号
+static void sigterm_handler(int sig)
+
+用于根据视频的宽度、高度和采样比率（sar）设置默认的播放窗口大小
+static void set_default_window_size(int width, int height, AVRational sar)
+
+负责初始化视频子系统并打开视频流。它在程序启动时和用户请求打开新文件时调用
+static int video_open(VideoState *is)
+
+负责将解码后的视频帧显示在 SDL 窗口中
+static void video_display(VideoState *is)
+
+用于获取指定时钟的时钟值
+static double get_clock(Clock *c)
+
+设置Clock结构体的当前时间
+static void set_clock_at(Clock *c, double pts, int serial, double time)
+
+设置一个Clock对象的时间，将时钟与当前时间戳同步，以便用于控制音频和视频帧的播放速度。
+static void set_clock(Clock *c, double pts, int serial)
+
+设置Clock对象的速度，该函数用于调整音频和视频帧的播放速度，以便与同步时钟保持一致
+static void set_clock_speed(Clock *c, double speed)
+
+初始化一个时钟对象（Clock），并且将队列序号（queue_serial）指向一个整数
+static void init_clock(Clock *c, int *queue_serial)
+
+作用是将主时钟同步到从时钟。当存在视频和音频时，需要对它们进行同步，因为它们来自不同的时钟。
+static void sync_clock_to_slave(Clock *c, Clock *slave)
+
+它用于确定视频同步类型
+static int get_master_sync_type(VideoState *is)
+
+用于获取主时钟的时间
+static double get_master_clock(VideoState *is)
+
+它用于检查外部时钟的速度并根据需要进行更正
+static void check_external_clock_speed(VideoState *is)
+
+用于实现音视频流的快进和快退
+static void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes)
+
+其作用是在播放和暂停之间切换视频流
+static void stream_toggle_pause(VideoState *is)
+
+用于在暂停和播放状态之间切换
+static void toggle_pause(VideoState *is)
+
+用于在静音和非静音状态之间进行切换
+static void toggle_mute(VideoState *is)
+
+其作用是根据指定的音量步长（step）和音量调整符号（sign）来更新当前的音量，并在命令行中打印出新的音量
+static void update_volume(VideoState *is, int sign, double step)
+
+作用是手动播放视频的下一帧画面，它允许用户在播放视频时进行准确的帧跳跃。【核心 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀】
+static void step_to_next_frame(VideoState *is)
+
+用于计算视频播放延迟时间。它将当前时钟的延迟值和主时钟与视频时钟的时差作为参数，并返回一个目标延迟值【核心 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀】
+static double compute_target_delay(double delay, VideoState *is)
+
+用于计算视频帧的持续时间
+static double vp_duration(VideoState *is, Frame *vp, Frame *nextvp)
+
+用于更新VideoState结构体中的视频时钟（VideoState的video_clock成员）
+static void update_video_pts(VideoState *is, double pts, int64_t pos, int serial)
+
+主要负责视频的刷新和显示
+static void video_refresh(void *opaque, double *remaining_time)
+
+将解码后的视频帧放入视频帧队列中，以便后续显示到屏幕上
+static int queue_picture(VideoState *is, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial)
+
+从当前视频帧队列 is->pictq（由 queue_picture() 函数填充）中获取视频帧并返回
+static int get_video_frame(VideoState *is, AVFrame *frame)
+
+作用是从音频队列 is->audioq 中获取音频包，解码音频帧，通过音频设备播放音频帧
+static int audio_thread(void *arg)
+
+用于启动特定解码器的解码线程
+static int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg)
+
+从视频队列 is->videoq 中获取视频包，解码视频帧后显示到屏幕上
+static int video_thread(void *arg)
+
+其作用是从字幕队列 is->subtitleq 中获取字幕包，进行解码后显示到屏幕上
+static int subtitle_thread(void *arg)
+
+用于更新音频波形图的显示
+static void update_sample_display(VideoState *is, short *samples, int samples_size)
+
+用于实现音频与视频的同步
+static int synchronize_audio(VideoState *is, int nb_samples)
+
+用于解码音频帧并将解码后的音频数据送入音频播放器中播放 【核心 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀】
+static int audio_decode_frame(VideoState *is)
+
+用于向 SDL2 音频子系统提交音频数据
+static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
+
+用于打开音频设备并初始化音频参数
+static int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params)
+
+打开视频和音频流中的一个，即音频流或视频流，并初始化所需的相关参数和数据结构 【核心 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀】
+static int stream_component_open(VideoState *is, int stream_index)
+
+一个中断回调函数，用于检测解码器是否需要中断解码操作
+static int decode_interrupt_cb(void *ctx)
+
+用于判断流中的数据包数量是否足够进行播放
+static int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue)
+
+用于判断媒体流是否实时流
+static int is_realtime(AVFormatContext *s)
+
+专门用于读取媒体流数据的线程函数 【核心 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀】
+static int read_thread(void *arg)
+
+用于打开指定媒体文件并解析其中的音视频流
+static VideoState *stream_open(const char *filename, AVInputFormat *iformat)
+
+用于切换单个视频流的不同语言版本或音频流的不同声道版本
+static void stream_cycle_channel(VideoState *is, int codec_type)
+
+用于切换视频窗口的全屏状态
+static void toggle_full_screen(VideoState *is)
+
+用于切换音频波形图的显示状态
+static void toggle_audio_display(VideoState *is)
+
+用于等待 SDL 窗口事件的发生
+static void refresh_loop_wait_event(VideoState *is, SDL_Event *event)
+
+用于根据用户按下的快进或快退键，跳转到指定章节或时间点
+static void seek_chapter(VideoState *is, int incr)
+
+ffplay 程序的主要控制循环，用于监听和处理各种事件
+static void event_loop(VideoState *cur_stream)
+
+
+static int opt_frame_size(void *optctx, const char *opt, const char *arg)
+
+
+static int opt_width(void *optctx, const char *opt, const char *arg)
+
+
+static int opt_height(void *optctx, const char *opt, const char *arg)
+
+static int opt_format(void *optctx, const char *opt, const char *arg)
+
+static int opt_frame_pix_fmt(void *optctx, const char *opt, const char *arg)
+
+static int opt_sync(void *optctx, const char *opt, const char *arg)
+
+static int opt_seek(void *optctx, const char *opt, const char *arg)
+
+static int opt_duration(void *optctx, const char *opt, const char *arg)
+
+static int opt_show_mode(void *optctx, const char *opt, const char *arg)
+
+static void opt_input_file(void *optctx, const char *filename)
+
+static int opt_codec(void *optctx, const char *opt, const char *arg)
+
+
+static const OptionDef options[] =
+
+static void show_usage(void)
+
+void show_help_default(const char *opt, const char *arg)
+
+int main(int argc, char **argv)
