@@ -1157,12 +1157,12 @@ static int interrupt_callback(void *ctx);
         frame.duration = 1.0 / _fps;
     }
     
-#if 0
-    LoggerVideo(2, @"VFD: %.4f %.4f | %lld ",
-                frame.position,
-                frame.duration,
-                av_frame_get_pkt_pos(_videoFrame));
-#endif
+//#if 0
+//    LoggerVideo(2, @"VFD: %.4f %.4f | %lld ",
+//                frame.position,
+//                frame.duration,
+//                av_frame_get_pkt_pos(_videoFrame));
+//#endif
     
     return frame;
 }

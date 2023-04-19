@@ -725,15 +725,15 @@
 			children = (
 				D16B074929EEDEF500FA28DD /* KxAudioManager.h */,
 				D16B074A29EEDEF500FA28DD /* KxAudioManager.m */,
-				D16B074029EED67800FA28DD /* KxMovieViewController.h */,
-				D16B074129EED67800FA28DD /* KxMovieViewController.m */,
-				D16B074F29EEE6AD00FA28DD /* sound.wav */,
 				D16B074329EED6C500FA28DD /* KxMovieDecoder.h */,
 				D16B074429EED6C500FA28DD /* KxMovieDecoder.m */,
 				D16B074629EEDE6700FA28DD /* KxMovieGLView.h */,
+				D16B074729EEDE6700FA28DD /* KxMovieGLView.m */,
 				D16B074C29EEE2DB00FA28DD /* KXMovieMainViewController.h */,
 				D16B074D29EEE2DB00FA28DD /* KXMovieMainViewController.m */,
-				D16B074729EEDE6700FA28DD /* KxMovieGLView.m */,
+				D16B074029EED67800FA28DD /* KxMovieViewController.h */,
+				D16B074129EED67800FA28DD /* KxMovieViewController.m */,
+				D16B074F29EEE6AD00FA28DD /* sound.wav */,
 			);
 			path = KxMovieExapmle;
 			sourceTree = "<group>";
@@ -759,26 +759,26 @@
 		D17630F029DDAE0B00D25BA7 /* HHVideoPlayer-iOS */ = {
 			isa = PBXGroup;
 			children = (
-				D16B073F29EED5C800FA28DD /* KxMovieExapmle */,
-				D120280F29E7106C00886141 /* VideoPlayer */,
-				D176322E29DDB0D200D25BA7 /* Resource */,
-				D176312D29DDB0D100D25BA7 /* Lib */,
 				D17630F129DDAE0B00D25BA7 /* AppDelegate.h */,
 				D17630F229DDAE0B00D25BA7 /* AppDelegate.mm */,
-				D17630F429DDAE0B00D25BA7 /* SceneDelegate.h */,
-				D17630F529DDAE0B00D25BA7 /* SceneDelegate.m */,
-				D17630F729DDAE0B00D25BA7 /* ViewController.h */,
+				D17630FD29DDAE0E00D25BA7 /* Assets.xcassets */,
 				D1C195AE29ED331900EE978D /* explain */,
-				D1C195B029ED4B4400EE978D /* Option_explain */,
-				D17630F829DDAE0B00D25BA7 /* ViewController.m */,
 				D176310A29DDAF6D00D25BA7 /* HHBaseViewController.h */,
 				D176310B29DDAF6D00D25BA7 /* HHBaseViewController.m */,
 				D1CAFDA929E5775100B2C48E /* HHHeader.h */,
-				D17630FA29DDAE0B00D25BA7 /* Main.storyboard */,
-				D17630FD29DDAE0E00D25BA7 /* Assets.xcassets */,
-				D17630FF29DDAE0E00D25BA7 /* LaunchScreen.storyboard */,
 				D176310229DDAE0E00D25BA7 /* Info.plist */,
+				D16B073F29EED5C800FA28DD /* KxMovieExapmle */,
+				D17630FF29DDAE0E00D25BA7 /* LaunchScreen.storyboard */,
+				D176312D29DDB0D100D25BA7 /* Lib */,
 				D176310329DDAE0E00D25BA7 /* main.m */,
+				D17630FA29DDAE0B00D25BA7 /* Main.storyboard */,
+				D1C195B029ED4B4400EE978D /* Option_explain */,
+				D176322E29DDB0D200D25BA7 /* Resource */,
+				D17630F429DDAE0B00D25BA7 /* SceneDelegate.h */,
+				D17630F529DDAE0B00D25BA7 /* SceneDelegate.m */,
+				D120280F29E7106C00886141 /* VideoPlayer */,
+				D17630F729DDAE0B00D25BA7 /* ViewController.h */,
+				D17630F829DDAE0B00D25BA7 /* ViewController.m */,
 			);
 			path = "HHVideoPlayer-iOS";
 			sourceTree = "<group>";

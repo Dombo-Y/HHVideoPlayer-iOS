@@ -164,10 +164,7 @@ static OSStatus renderCallback (void *inRefCon, AudioUnitRenderActionFlags    *i
     {
         // just warning
     }
-    
-    // Set the buffer size, this will affect the number of samples that get rendered every time the audio callback is fired
-    // A small number will get you lower latency audio, but will make your processor work harder
-    
+     
 #if !TARGET_IPHONE_SIMULATOR
     Float32 preferredBufferSize = 0.0232;
     if (checkError(AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration,

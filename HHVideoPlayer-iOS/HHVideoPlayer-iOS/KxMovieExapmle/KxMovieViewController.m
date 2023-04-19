@@ -166,7 +166,6 @@ static NSMutableDictionary * gHistory;
         KxMovieDecoder *decoder = [[KxMovieDecoder alloc] init];
         
         decoder.interruptCallback = ^BOOL(){
-            
             __strong KxMovieViewController *strongSelf = weakSelf;
             return strongSelf ? [strongSelf interruptDecoder] : YES;
         };
