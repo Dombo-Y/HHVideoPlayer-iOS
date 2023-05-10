@@ -19,6 +19,7 @@ UITableViewDelegate,UITableViewDataSource
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    self.view.backgroundColor = [UIColor redColor];
 }
 
 #pragma mark - UITableViewDelegate

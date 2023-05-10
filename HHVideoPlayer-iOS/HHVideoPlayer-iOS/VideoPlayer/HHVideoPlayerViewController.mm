@@ -7,12 +7,7 @@
 
 #import "HHVideoPlayerViewController.h"
 #import "Masonry.h"
-
-//extern "C" {
-//#include "libavformat/avformat.h"
-//#include "libavcodec/avcodec.h"
-//#include "SDL_main.h"
-//}
+ 
 //#include "Videoplayer.h"
 #import "OpenGLView20.h"
 #import "HHVideoPlayer.h"
